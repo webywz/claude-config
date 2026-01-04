@@ -14,7 +14,14 @@ const api: ElectronAPI = {
   },
   system: {
     openFolder: () => ipcRenderer.invoke('system:open-folder'),
-    getConfigPath: () => ipcRenderer.invoke('system:get-config-path')
+    getConfigPath: () => ipcRenderer.invoke('system:get-config-path'),
+    getEnvVars: () => ipcRenderer.invoke('system:get-env-vars'),
+    setEnvVar: (name, value) => ipcRenderer.invoke('system:set-env-var', name, value),
+    deleteEnvVar: (name) => ipcRenderer.invoke('system:delete-env-var', name),
+    getPaths: () => ipcRenderer.invoke('system:get-paths'),
+    addPath: (path) => ipcRenderer.invoke('system:add-path', path),
+    removePath: (path) => ipcRenderer.invoke('system:remove-path', path),
+    movePath: (from, to) => ipcRenderer.invoke('system:move-path', from, to)
   }
 }
 

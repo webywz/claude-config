@@ -175,8 +175,8 @@
 
         <!-- Environment Variables Editor -->
         <div class="form-group" data-animate="4.5">
-          <el-form-item label="自定义环境变量">
-            <EnvVarEditor :env="localEnv" @update:env="handleEnvUpdate" />
+          <el-form-item label="Windows 环境变量">
+            <EnvVarEditor />
           </el-form-item>
         </div>
 
@@ -311,13 +311,6 @@ const smartSuggestion = ref('')
 const tokenHint = ref('')
 const urlHint = ref('')
 
-// Local env object for custom environment variables
-const localEnv = ref<Record<string, string | undefined>>({})
-
-function handleEnvUpdate(newEnv: Record<string, string | undefined>) {
-  localEnv.value = { ...newEnv }
-}
-
 onMounted(async () => {
   await configStore.loadConfig()
   await configStore.loadPresets()
@@ -329,9 +322,6 @@ onMounted(async () => {
   telemetryValue.value = configStore.disableTelemetry
   trafficValue.value = configStore.disableTraffic
   coAuthorValue.value = configStore.config.includeCoAuthoredBy
-
-  // Initialize local env with current config env
-  localEnv.value = { ...configStore.config.env }
 
   // Show initial smart suggestion
   setTimeout(() => {
@@ -400,7 +390,6 @@ async function handleSave() {
   configStore.toggleTelemetry(telemetryValue.value)
   configStore.toggleTraffic(trafficValue.value)
   configStore.toggleCoAuthor(coAuthorValue.value)
-  configStore.updateEnv(localEnv.value)
 
   await configStore.saveConfig()
   saving.value = false
@@ -430,7 +419,6 @@ async function handleApplyPreset() {
     telemetryValue.value = configStore.disableTelemetry
     trafficValue.value = configStore.disableTraffic
     coAuthorValue.value = configStore.config.includeCoAuthoredBy
-    localEnv.value = { ...configStore.config.env }
     selectedPreset.value = ''
     smartSuggestion.value = `预设 "${selectedPreset.value}" 已应用`
   }
@@ -461,7 +449,6 @@ async function handleSavePreset() {
   configStore.toggleTelemetry(telemetryValue.value)
   configStore.toggleTraffic(trafficValue.value)
   configStore.toggleCoAuthor(coAuthorValue.value)
-  configStore.updateEnv(localEnv.value)
 
   const success = await configStore.savePreset(newPresetName.value)
   if (success) {

@@ -1,81 +1,106 @@
 <template>
-  <div class="env-var-editor">
-    <div class="env-header">
+  <div class="path-editor">
+    <div class="path-header">
       <div class="header-content">
         <svg class="header-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M4 4H20C21.1046 4 22 4.89543 22 6V18C22 19.1046 21.1046 20 20 20H4C2.89543 20 2 19.1046 2 18V6C2 4.89543 2.89543 4 4 4Z" stroke="url(#envGradient)" stroke-width="2"/>
-          <path d="M7 8H13M7 12H11M7 16H10" stroke="url(#envGradient)" stroke-width="2" stroke-linecap="round"/>
-          <path d="M16 11L18 13L22 9" stroke="url(#envGradient)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M4 4H20C21.1046 4 22 4.89543 22 6V18C22 19.1046 21.1046 20 20 20H4C2.89543 20 2 19.1046 2 18V6C2 4.89543 2.89543 4 4 4Z" stroke="url(#pathGradient)" stroke-width="2"/>
+          <path d="M7 8H17M7 12H13M7 16H11" stroke="url(#pathGradient)" stroke-width="2" stroke-linecap="round"/>
           <defs>
-            <linearGradient id="envGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <linearGradient id="pathGradient" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stop-color="#667eea"/>
               <stop offset="100%" stop-color="#764ba2"/>
             </linearGradient>
           </defs>
         </svg>
-        <h3 class="header-title">环境变量</h3>
+        <h3 class="header-title">Windows Path 环境变量</h3>
       </div>
-      <button class="add-btn" @click="addNewVar">
-        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-        添加变量
-      </button>
+      <div class="header-actions">
+        <el-select v-model="filterType" placeholder="筛选" size="small" style="width: 100px">
+          <el-option label="全部" value="all" />
+          <el-option label="用户" value="user" />
+          <el-option label="系统" value="system" />
+        </el-select>
+        <button type="button" class="add-btn" @click="showAddDialog = true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          添加
+        </button>
+      </div>
     </div>
 
-    <div class="env-list">
+    <!-- Add path dialog -->
+    <el-dialog v-model="showAddDialog" title="添加路径" width="500px">
+      <el-form label-position="top">
+        <el-form-item label="路径">
+          <el-input
+            v-model="newPathInput"
+            placeholder="输入路径，如: C:\Program Files\MyApp"
+            @keyup.enter="addPath"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showAddDialog = false">取消</el-button>
+        <el-button type="primary" @click="addPath">添加</el-button>
+      </template>
+    </el-dialog>
+
+    <div class="path-list">
       <transition-group name="list">
         <div
-          v-for="(varItem, index) in envVars"
-          :key="varItem.id"
-          class="env-item"
-          :class="{ editing: varItem.isEditing }"
+          v-for="(pathItem, index) in filteredPaths"
+          :key="`${pathItem.value}-${pathItem.type}`"
+          class="path-item"
+          :class="{ 'is-system': pathItem.type === 'system' }"
         >
-          <div v-if="!varItem.isEditing" class="env-display">
-            <div class="env-info">
-              <span class="env-key">{{ varItem.key }}</span>
-              <span class="env-value">{{ maskValue(varItem.value) }}</span>
+          <div class="path-display">
+            <div class="path-info">
+              <span class="path-type" :class="pathItem.type">{{ pathItem.type === 'user' ? '用户' : '系统' }}</span>
+              <span class="path-value" :title="pathItem.value">{{ pathItem.value }}</span>
             </div>
-            <div class="env-actions">
-              <button class="action-btn edit" @click="editVar(index)" title="编辑">
+            <div class="path-actions">
+              <button
+                v-if="pathItem.type === 'user' && getUserIndex(index) > 0"
+                type="button"
+                class="action-btn move-up"
+                @click="movePath(getUserIndex(index), -1)"
+                title="上移"
+              >
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M11 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V20C2 20.5304 2.21071 21.0391 2.58579 21.4142C2.96086 21.7893 3.46957 22 4 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M18.5 2.50001C18.8978 2.10219 19.4374 1.87869 20 1.87869C20.5626 1.87869 21.1022 2.10219 21.5 2.50001C21.8978 2.89784 22.1213 3.4374 22.1213 4.00001C22.1213 4.56262 21.8978 5.10219 21.5 5.50001L12 15L8 16L9 12L18.5 2.50001Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M12 19V5M5 12L12 5L19 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </button>
-              <button class="action-btn delete" @click="deleteVar(index)" title="删除">
+              <button
+                v-if="pathItem.type === 'user' && getUserIndex(index) < userPathCount - 1"
+                type="button"
+                class="action-btn move-down"
+                @click="movePath(getUserIndex(index), 1)"
+                title="下移"
+              >
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 5V19M19 12L12 19L5 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+              <button
+                v-if="pathItem.type === 'user'"
+                type="button"
+                class="action-btn delete"
+                @click="deletePath(pathItem.value)"
+                title="删除"
+              >
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M3 6H5H21M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </button>
-            </div>
-          </div>
-          <div v-else class="env-edit">
-            <div class="edit-inputs">
-              <el-input
-                v-model="varItem.key"
-                placeholder="变量名"
-                class="key-input"
-                @keyup.enter="saveVar(index)"
-              />
-              <el-input
-                v-model="varItem.value"
-                placeholder="变量值"
-                type="password"
-                show-password
-                class="value-input"
-                @keyup.enter="saveVar(index)"
-              />
-            </div>
-            <div class="edit-actions">
-              <button class="action-btn save" @click="saveVar(index)" title="保存">
+              <button
+                v-else
+                type="button"
+                class="action-btn readonly"
+                title="系统路径只读"
+              >
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </button>
-              <button class="action-btn cancel" @click="cancelEdit(index)" title="取消">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M12 15L8 11H11V4H13V11H16L12 15ZM4 20H20V18H4V20Z" fill="currentColor"/>
                 </svg>
               </button>
             </div>
@@ -83,219 +108,179 @@
         </div>
       </transition-group>
 
-      <div v-if="envVars.length === 0" class="empty-state">
+      <div v-if="filteredPaths.length === 0 && !loading" class="empty-state">
         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M4 4H20C21.1046 4 22 4.89543 22 6V18C22 19.1046 21.1046 20 20 20H4C2.89543 20 2 19.1046 2 18V6C2 4.89543 2.89543 4 4 4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           <path d="M7 8H13M7 12H11M7 16H10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
-        <p>暂无自定义环境变量</p>
-        <p class="empty-hint">点击上方"添加变量"按钮添加</p>
+        <p>暂无路径</p>
       </div>
+    </div>
+
+    <div v-if="systemMessage" class="system-message" :class="systemMessage.type">
+      {{ systemMessage.text }}
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ref, computed, onMounted } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import type { PathEntry } from '@/types/config.types'
 
-interface EnvVar {
-  id: string
-  key: string
-  value: string
-  originalKey?: string
-  isEditing: boolean
+const paths = ref<PathEntry[]>([])
+const loading = ref(false)
+const filterType = ref<'all' | 'user' | 'system'>('all')
+const showAddDialog = ref(false)
+const newPathInput = ref('')
+const systemMessage = ref<{ text: string; type: 'success' | 'error' | 'info' } | null>(null)
+
+const filteredPaths = computed(() => {
+  let result = paths.value
+  if (filterType.value !== 'all') {
+    result = result.filter(p => p.type === filterType.value)
+  }
+  return result
+})
+
+const userPathCount = computed(() => {
+  return paths.value.filter(p => p.type === 'user').length
+})
+
+function getUserIndex(overallIndex: number): number {
+  // Get the index within user paths only
+  const userPaths = paths.value.filter(p => p.type === 'user')
+  const item = filteredPaths.value[overallIndex]
+  if (item.type !== 'user') return -1
+  return userPaths.findIndex(p => p.value === item.value)
 }
 
-interface EnvObject {
-  [key: string]: string | undefined
+async function loadPaths() {
+  loading.value = true
+  try {
+    paths.value = await window.electronAPI.system.getPaths()
+  } catch (error) {
+    console.error('Failed to load paths:', error)
+    showSystemMessage('加载路径失败', 'error')
+  } finally {
+    loading.value = false
+  }
 }
 
-// Reserved environment variables that shouldn't be edited here
-const RESERVED_KEYS = [
-  'ANTHROPIC_AUTH_TOKEN',
-  'ANTHROPIC_API_KEY',
-  'ANTHROPIC_BASE_URL',
-  'DISABLE_TELEMETRY',
-  'CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC',
-  'OTEL_METRICS_EXPORTER'
-]
+async function addPath() {
+  const pathValue = newPathInput.value.trim()
+  if (!pathValue) {
+    ElMessage.error('路径不能为空')
+    return
+  }
 
-const props = defineProps<{
-  env: EnvObject
-}>()
+  // Check for duplicates
+  const exists = paths.value.some(p => p.value.toLowerCase() === pathValue.toLowerCase())
+  if (exists) {
+    ElMessage.error('该路径已存在')
+    return
+  }
 
-const emit = defineEmits<{
-  'update:env': [value: EnvObject]
-}>()
-
-const envVars = ref<EnvVar[]>([])
-let idCounter = 0
-
-// Initialize from props
-function initFromProps() {
-  const vars: EnvVar[] = []
-  for (const [key, value] of Object.entries(props.env)) {
-    if (value !== undefined && !RESERVED_KEYS.includes(key)) {
-      vars.push({
-        id: String(idCounter++),
-        key,
-        value,
-        isEditing: false
-      })
+  try {
+    const success = await window.electronAPI.system.addPath(pathValue)
+    if (success) {
+      showSystemMessage('路径已添加', 'success')
+      // Add to local state
+      paths.value.push({ value: pathValue, type: 'user' })
+      showAddDialog.value = false
+      newPathInput.value = ''
+    } else {
+      showSystemMessage('添加失败，路径可能已存在', 'error')
     }
-  }
-  envVars.value = vars
-}
-
-initFromProps()
-
-function generateId(): string {
-  return String(idCounter++)
-}
-
-function maskValue(value: string): string {
-  if (!value) return ''
-  if (value.length <= 8) return '•'.repeat(value.length)
-  return value.substring(0, 4) + '•'.repeat(value.length - 8) + value.substring(value.length - 4)
-}
-
-function addNewVar() {
-  envVars.value.push({
-    id: generateId(),
-    key: '',
-    value: '',
-    isEditing: true
-  })
-}
-
-function editVar(index: number) {
-  const item = envVars.value[index]
-  item.originalKey = item.key
-  item.isEditing = true
-}
-
-function saveVar(index: number) {
-  const item = envVars.value[index]
-
-  if (!item.key.trim()) {
-    ElMessage.error('变量名不能为空')
-    return
-  }
-
-  // Check for duplicate keys (excluding current item when editing)
-  const duplicate = envVars.value.find((v, i) => i !== index && v.key === item.key)
-  if (duplicate) {
-    ElMessage.error(`变量名 "${item.key}" 已存在`)
-    return
-  }
-
-  // Check if key is reserved
-  if (RESERVED_KEYS.includes(item.key)) {
-    ElMessage.error(`"${item.key}" 是保留变量名，请在主配置区域设置`)
-    return
-  }
-
-  item.isEditing = false
-  delete item.originalKey
-  emitChange()
-}
-
-function cancelEdit(index: number) {
-  const item = envVars.value[index]
-
-  // If it was a new item (no original key), remove it
-  if (!item.originalKey && !item.key) {
-    envVars.value.splice(index, 1)
-  } else {
-    // Restore original key
-    item.key = item.originalKey || item.key
-    item.isEditing = false
-    delete item.originalKey
+  } catch (error) {
+    showSystemMessage('添加失败: ' + (error instanceof Error ? error.message : '未知错误'), 'error')
   }
 }
 
-function deleteVar(index: number) {
-  envVars.value.splice(index, 1)
-  emitChange()
-}
+async function deletePath(pathValue: string) {
+  try {
+    await ElMessageBox.confirm(`确定要删除路径 "${pathValue}" 吗？`, '确认删除', {
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
 
-function emitChange() {
-  const newEnv: EnvObject = {}
-
-  // Keep all original env values
-  for (const [key, value] of Object.entries(props.env)) {
-    newEnv[key] = value
-  }
-
-  // Remove old custom env values
-  for (const item of envVars.value) {
-    if (!item.isEditing) {
-      // Remove the old key if it was renamed
-      if (item.originalKey && item.originalKey !== item.key) {
-        delete newEnv[item.originalKey]
+    const success = await window.electronAPI.system.removePath(pathValue)
+    if (success) {
+      showSystemMessage('路径已删除', 'success')
+      // Remove from local state
+      const index = paths.value.findIndex(p => p.value === pathValue)
+      if (index !== -1) {
+        paths.value.splice(index, 1)
       }
+    } else {
+      showSystemMessage('删除失败', 'error')
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      showSystemMessage('删除失败: ' + (error instanceof Error ? error.message : '未知错误'), 'error')
     }
   }
-
-  // Add current custom env values
-  for (const item of envVars.value) {
-    if (!item.isEditing && item.key) {
-      newEnv[item.key] = item.value || undefined
-    }
-  }
-
-  emit('update:env', newEnv)
 }
 
-// Watch for external changes
-watch(
-  () => props.env,
-  () => {
-    // Only reinitialize if the keys have changed significantly
-    const currentKeys = new Set(Object.keys(props.env).filter(k => !RESERVED_KEYS.includes(k)))
-    const localKeys = new Set(envVars.value.filter(v => !v.isEditing).map(v => v.key))
-
-    if (currentKeys.size !== localKeys.size || ![...currentKeys].every(k => localKeys.has(k))) {
-      // Save current editing state
-      const editingStates = new Set(envVars.value.filter(v => v.isEditing).map(v => v.id))
-
-      // Reinitialize
-      initFromProps()
-
-      // Restore editing states for items that still exist
-      // (this is a simplified approach - in production you'd want more sophisticated handling)
+async function movePath(userIndex: number, direction: number) {
+  const toIndex = userIndex + direction
+  try {
+    const success = await window.electronAPI.system.movePath(userIndex, toIndex)
+    if (success) {
+      showSystemMessage('路径顺序已更新', 'success')
+      await loadPaths() // Reload to get correct order
+    } else {
+      showSystemMessage('移动失败', 'error')
     }
-  },
-  { deep: true }
-)
+  } catch (error) {
+    showSystemMessage('移动失败: ' + (error instanceof Error ? error.message : '未知错误'), 'error')
+  }
+}
+
+function showSystemMessage(text: string, type: 'success' | 'error' | 'info') {
+  systemMessage.value = { text, type }
+  setTimeout(() => {
+    systemMessage.value = null
+  }, 3000)
+}
+
+onMounted(() => {
+  loadPaths()
+})
 </script>
 
 <style scoped>
-.env-var-editor {
+.path-editor {
   background: var(--bg-card);
   border-radius: 20px;
   padding: 24px;
   box-shadow: var(--shadow-md);
   border: 1px solid var(--border-color);
+  width: 100%;
 }
 
-.env-header {
+.path-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .header-content {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex: 1;
+  min-width: 0;
 }
 
 .header-icon {
   width: 24px;
   height: 24px;
+  flex-shrink: 0;
 }
 
 .header-title {
@@ -308,19 +293,27 @@ watch(
   background-clip: text;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
 .add-btn {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 16px;
+  padding: 6px 12px;
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
   border: 1px solid rgba(99, 102, 241, 0.3);
-  border-radius: 10px;
+  border-radius: 8px;
   color: var(--color-primary);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .add-btn:hover {
@@ -329,79 +322,93 @@ watch(
 }
 
 .add-btn svg {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
 }
 
-.env-list {
+.path-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  min-height: 100px;
+  gap: 8px;
+  max-height: 400px;
+  overflow-y: auto;
 }
 
-.env-item {
+.path-item {
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
-  overflow: hidden;
+  border-radius: 10px;
+  /* overflow: hidden; */
   transition: all 0.2s ease;
 }
 
-.env-item:hover {
+.path-item:hover {
   background: rgba(255, 255, 255, 0.04);
   border-color: rgba(99, 102, 241, 0.3);
 }
 
-.env-item.editing {
-  background: rgba(99, 102, 241, 0.05);
-  border-color: rgba(99, 102, 241, 0.4);
+.path-item.is-system {
+  background: rgba(107, 114, 128, 0.05);
 }
 
-.env-display {
+.path-display {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
+  padding: 10px 14px;
+  gap: 8px;
 }
 
-.env-info {
+.path-info {
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   min-width: 0;
 }
 
-.env-key {
-  font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
-  font-size: 13px;
+.path-type {
+  font-size: 10px;
   font-weight: 600;
-  color: var(--color-primary);
-  background: rgba(99, 102, 241, 0.1);
-  padding: 4px 10px;
+  padding: 2px 8px;
   border-radius: 6px;
   flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.env-value {
+.path-type.user {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--color-green);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.path-type.system {
+  background: rgba(107, 114, 128, 0.15);
+  color: var(--text-dim);
+  border: 1px solid rgba(107, 114, 128, 0.3);
+}
+
+.path-value {
   font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
   font-size: 12px;
-  color: var(--text-dim);
+  color: var(--text-normal);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  flex: 1;
+  min-width: 0;
 }
 
-.env-actions {
+.path-actions {
   display: flex;
-  gap: 6px;
+  gap: 4px;
+  flex-shrink: 0;
 }
 
 .action-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  padding: 4px 8px;
+  border-radius: 6px;
   border: none;
   background: transparent;
   color: var(--text-dim);
@@ -410,14 +417,16 @@ watch(
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
 .action-btn svg {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
 }
 
-.action-btn.edit:hover {
+.action-btn.move-up:hover,
+.action-btn.move-down:hover {
   background: rgba(99, 102, 241, 0.1);
   color: var(--color-primary);
 }
@@ -427,47 +436,9 @@ watch(
   color: var(--color-red);
 }
 
-.action-btn.save {
-  color: var(--color-green);
-}
-
-.action-btn.save:hover {
-  background: rgba(16, 185, 129, 0.1);
-}
-
-.action-btn.cancel:hover {
-  background: rgba(107, 114, 128, 0.1);
-}
-
-.env-edit {
-  padding: 12px 16px;
-}
-
-.edit-inputs {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
-.edit-inputs :deep(.el-input__wrapper) {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--border-color);
-  box-shadow: none;
-}
-
-.key-input {
-  flex: 1;
-  min-width: 150px;
-}
-
-.value-input {
-  flex: 2;
-}
-
-.edit-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 6px;
+.action-btn.readonly {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .empty-state {
@@ -491,10 +462,31 @@ watch(
   font-size: 14px;
 }
 
-.empty-hint {
-  font-size: 12px;
-  opacity: 0.7;
-  margin-top: 4px;
+.system-message {
+  margin-top: 16px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+}
+
+.system-message.success {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.15) 100%);
+  color: var(--color-green);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.system-message.error {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.15) 100%);
+  color: var(--color-red);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.system-message.info {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
+  color: var(--color-primary);
+  border: 1px solid rgba(99, 102, 241, 0.3);
 }
 
 /* List transitions */
@@ -515,5 +507,22 @@ watch(
 
 .list-move {
   transition: transform 0.3s ease;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .path-display {
+    flex-wrap: wrap;
+  }
+
+  .path-info {
+    flex-basis: 100%;
+    margin-bottom: 4px;
+  }
+
+  .path-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
 }
 </style>

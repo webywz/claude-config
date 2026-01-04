@@ -143,10 +143,6 @@ export const useConfigStore = defineStore('config', () => {
     config.value.includeCoAuthoredBy = enabled
   }
 
-  function updateEnv(env: Record<string, string | undefined>) {
-    config.value.env = { ...env }
-  }
-
   async function savePreset(name: string) {
     if (!name) {
       statusMessage.value = { text: '请输入预设名称', type: 'error' }
@@ -226,7 +222,6 @@ export const useConfigStore = defineStore('config', () => {
     toggleTelemetry,
     toggleTraffic,
     toggleCoAuthor,
-    updateEnv,
     savePreset,
     applyPreset,
     deletePreset,

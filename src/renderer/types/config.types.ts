@@ -19,6 +19,11 @@ export interface Presets {
   [key: string]: ClaudeConfig
 }
 
+export interface PathEntry {
+  value: string
+  type: 'user' | 'system'
+}
+
 declare global {
   interface Window {
     electronAPI: {
@@ -35,6 +40,13 @@ declare global {
       system: {
         openFolder: () => Promise<void>
         getConfigPath: () => Promise<string>
+        getEnvVars: () => Promise<Array<{ name: string; value: string; type: 'user' | 'system' }>>
+        setEnvVar: (name: string, value: string) => Promise<boolean>
+        deleteEnvVar: (name: string) => Promise<boolean>
+        getPaths: () => Promise<PathEntry[]>
+        addPath: (path: string) => Promise<boolean>
+        removePath: (path: string) => Promise<boolean>
+        movePath: (fromIndex: number, toIndex: number) => Promise<boolean>
       }
     }
   }
