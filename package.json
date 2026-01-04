@@ -1,0 +1,33 @@
+{
+  "name": "claude-config-electron",
+  "version": "1.0.0",
+  "description": "Claude Code configuration tool",
+  "main": "out/main/index.js",
+  "author": "",
+  "license": "MIT",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "build:win": "npm run build && electron-builder --win",
+    "build:mac": "npm run build && electron-builder --mac",
+    "build:all": "npm run build && electron-builder --win --mac"
+  },
+  "dependencies": {
+    "element-plus": "^2.13.0",
+    "pinia": "^2.3.1",
+    "vue": "^3.5.26"
+  },
+  "devDependencies": {
+    "@electron-toolkit/tsconfig": "^1.0.1",
+    "@electron-toolkit/utils": "^3.0.0",
+    "@types/node": "^22.19.3",
+    "@vitejs/plugin-vue": "^5.2.4",
+    "electron": "^32.3.3",
+    "electron-builder": "^25.1.8",
+    "electron-vite": "^2.3.0",
+    "sass": "^1.97.1",
+    "typescript": "^5.9.3",
+    "vite": "^5.4.21"
+  }
+}
