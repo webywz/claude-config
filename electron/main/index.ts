@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, dialog } from 'electron'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { join } from 'path'
 import { ipcMain, shell } from 'electron'
@@ -6,6 +6,9 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs'
 import { join as pathJoin, dirname } from 'path'
 import { homedir } from 'os'
 import { execSync } from 'child_process'
+import { CodexConfigManager } from '../config/codex-config-manager'
+import { autoUpdater } from 'electron-updater'
+import type { CodexConfig, CodexAuth } from '../config/types'
 
 // Types
 interface ClaudeConfig {
@@ -29,9 +32,14 @@ interface Presets {
   [key: string]: ClaudeConfig
 }
 
+interface CodexPresets {
+  [key: string]: CodexConfig
+}
+
 // Config Manager
 const configPath = pathJoin(homedir(), '.claude', 'settings.json')
 const presetsPath = pathJoin(homedir(), '.claude_presets', 'presets.json')
+const codexPresetsPath = pathJoin(homedir(), '.codex_presets', 'presets.json')
 
 function loadConfig(): ClaudeConfig {
   if (existsSync(configPath)) {
@@ -192,8 +200,106 @@ ipcMain.handle('presets:delete', (_, name: string): boolean => {
   return false
 })
 
+// Codex Config Manager
+const codexConfigManager = new CodexConfigManager()
+
+// Codex IPC Handlers
+ipcMain.handle('codex:load-config', (): CodexConfig => {
+  return codexConfigManager.loadConfig()
+})
+
+ipcMain.handle('codex:save-config', (_, config: CodexConfig): boolean => {
+  return codexConfigManager.saveConfig(config)
+})
+
+ipcMain.handle('codex:load-auth', (): CodexAuth => {
+  return codexConfigManager.loadAuth()
+})
+
+ipcMain.handle('codex:save-auth', (_, auth: CodexAuth): boolean => {
+  return codexConfigManager.saveAuth(auth)
+})
+
+ipcMain.handle('codex:get-config-path', (): string => {
+  return codexConfigManager.getConfigPath()
+})
+
+ipcMain.handle('codex:get-auth-path', (): string => {
+  return codexConfigManager.getAuthPath()
+})
+
+ipcMain.handle('codex:get-config-raw', (): string => {
+  try {
+    const path = codexConfigManager.getConfigPath()
+    if (!existsSync(path)) {
+      return ''
+    }
+    return readFileSync(path, 'utf-8')
+  } catch (error) {
+    console.error('Failed to read Codex config.toml:', error)
+    return ''
+  }
+})
+
+function loadCodexPresets(): CodexPresets {
+  if (existsSync(codexPresetsPath)) {
+    try {
+      const content = readFileSync(codexPresetsPath, 'utf-8')
+      return JSON.parse(content)
+    } catch (error) {
+      console.error('Failed to load Codex presets:', error)
+    }
+  }
+  return {}
+}
+
+function saveCodexPresets(presets: CodexPresets): boolean {
+  try {
+    const dir = dirname(codexPresetsPath)
+    if (!existsSync(dir)) {
+      mkdirSync(dir, { recursive: true })
+    }
+    writeFileSync(codexPresetsPath, JSON.stringify(presets, null, 2), 'utf-8')
+    return true
+  } catch (error) {
+    console.error('Failed to save Codex presets:', error)
+    return false
+  }
+}
+
+ipcMain.handle('codex-presets:load', (): CodexPresets => {
+  return loadCodexPresets()
+})
+
+ipcMain.handle('codex-presets:save', (_, presets: CodexPresets): boolean => {
+  return saveCodexPresets(presets)
+})
+
+ipcMain.handle('codex-presets:apply', (_, name: string): { success: boolean; config?: CodexConfig } => {
+  const presets = loadCodexPresets()
+  if (name in presets) {
+    const config = presets[name]
+    const success = codexConfigManager.saveConfig(config)
+    return { success, config: success ? config : undefined }
+  }
+  return { success: false }
+})
+
+ipcMain.handle('codex-presets:delete', (_, name: string): boolean => {
+  const presets = loadCodexPresets()
+  if (name in presets) {
+    delete presets[name]
+    return saveCodexPresets(presets)
+  }
+  return false
+})
+
 ipcMain.handle('system:open-folder', (): void => {
   shell.openPath(configPath)
+})
+
+ipcMain.handle('system:open-codex-folder', (): void => {
+  shell.openPath(codexConfigManager.getConfigPath())
 })
 
 ipcMain.handle('system:get-config-path', (): string => {
@@ -506,6 +612,8 @@ function createWindow(): void {
     mainWindow.show()
   })
 
+  setupAutoUpdater(mainWindow)
+
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)
     return { action: 'deny' }
@@ -517,6 +625,70 @@ function createWindow(): void {
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
+}
+
+function setupAutoUpdater(mainWindow: BrowserWindow): void {
+  if (!app.isPackaged) {
+    return
+  }
+
+  const updateUrl = process.env['UPDATE_URL'] || process.env['ELECTRON_UPDATER_URL']
+  if (updateUrl) {
+    try {
+      autoUpdater.setFeedURL({ provider: 'generic', url: updateUrl })
+    } catch (error) {
+      console.error('Failed to set update feed URL:', error)
+    }
+  }
+
+  autoUpdater.autoDownload = false
+
+  autoUpdater.on('error', (error) => {
+    console.error('Auto update error:', error)
+  })
+
+  autoUpdater.on('update-available', async (info) => {
+    const result = await dialog.showMessageBox(mainWindow, {
+      type: 'info',
+      title: '发现新版本',
+      message: `发现新版本 ${info.version}，是否下载更新？`,
+      buttons: ['下载', '稍后'],
+      defaultId: 0,
+      cancelId: 1
+    })
+
+    if (result.response === 0) {
+      autoUpdater.downloadUpdate()
+    }
+  })
+
+  autoUpdater.on('update-not-available', async () => {
+    // Quiet by default; comment in if you want a toast/dialog.
+  })
+
+  autoUpdater.on('update-downloaded', async (info) => {
+    const result = await dialog.showMessageBox(mainWindow, {
+      type: 'info',
+      title: '更新已就绪',
+      message: `更新 ${info.version} 已下载，是否立即重启安装？`,
+      buttons: ['重启安装', '稍后'],
+      defaultId: 0,
+      cancelId: 1
+    })
+
+    if (result.response === 0) {
+      autoUpdater.quitAndInstall()
+    }
+  })
+
+  // Kick off update check once UI is visible.
+  mainWindow.once('ready-to-show', () => {
+    autoUpdater.checkForUpdates().catch((error) => {
+      if (updateUrl) {
+        console.error('Failed to check for updates:', error)
+      }
+    })
+  })
 }
 
 // App lifecycle

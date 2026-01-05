@@ -6,6 +6,19 @@ const api: ElectronAPI = {
     load: () => ipcRenderer.invoke('config:load'),
     save: (config) => ipcRenderer.invoke('config:save', config)
   },
+  codex: {
+    loadConfig: () => ipcRenderer.invoke('codex:load-config'),
+    saveConfig: (config) => ipcRenderer.invoke('codex:save-config', config),
+    loadAuth: () => ipcRenderer.invoke('codex:load-auth'),
+    saveAuth: (auth) => ipcRenderer.invoke('codex:save-auth', auth),
+    getConfigPath: () => ipcRenderer.invoke('codex:get-config-path'),
+    getAuthPath: () => ipcRenderer.invoke('codex:get-auth-path'),
+    getConfigRaw: () => ipcRenderer.invoke('codex:get-config-raw'),
+    loadPresets: () => ipcRenderer.invoke('codex-presets:load'),
+    savePresets: (presets) => ipcRenderer.invoke('codex-presets:save', presets),
+    applyPreset: (name) => ipcRenderer.invoke('codex-presets:apply', name),
+    deletePreset: (name) => ipcRenderer.invoke('codex-presets:delete', name)
+  },
   presets: {
     load: () => ipcRenderer.invoke('presets:load'),
     save: (presets) => ipcRenderer.invoke('presets:save', presets),
@@ -14,6 +27,7 @@ const api: ElectronAPI = {
   },
   system: {
     openFolder: () => ipcRenderer.invoke('system:open-folder'),
+    openCodexFolder: () => ipcRenderer.invoke('system:open-codex-folder'),
     getConfigPath: () => ipcRenderer.invoke('system:get-config-path'),
     getEnvVars: () => ipcRenderer.invoke('system:get-env-vars'),
     setEnvVar: (name, value) => ipcRenderer.invoke('system:set-env-var', name, value),

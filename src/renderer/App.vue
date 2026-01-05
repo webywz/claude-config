@@ -4,17 +4,7 @@
     <div class="ai-header" :class="{ 'glow-effect': isActive }">
       <div class="ai-avatar-container">
         <div class="ai-avatar">
-          <svg class="ai-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="12" cy="12" r="10" stroke="url(#gradient)" stroke-width="2"/>
-            <path d="M12 7V12L15 15" stroke="url(#gradient)" stroke-width="2" stroke-linecap="round"/>
-            <circle cx="12" cy="12" r="2" fill="url(#gradient)"/>
-            <defs>
-              <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#667eea"/>
-                <stop offset="100%" stop-color="#764ba2"/>
-              </linearGradient>
-            </defs>
-          </svg>
+          <img class="ai-icon" :src="logoUrl" alt="Claude Config" />
           <div class="ai-pulse" v-if="loading"></div>
         </div>
         <div class="ai-status" :class="{ online: !loading }"></div>
@@ -25,39 +15,67 @@
       </div>
     </div>
 
+    <!-- Tab Switcher -->
+    <div class="tab-switcher">
+      <button
+        :class="['tab-btn', { active: activeTab === 'claude' }]"
+        @click="activeTab = 'claude'"
+      >
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Claude 配置
+      </button>
+      <button
+        :class="['tab-btn', { active: activeTab === 'codex' }]"
+        @click="activeTab = 'codex'"
+      >
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M21 16V8C21 6.89543 20.1046 6 19 6H5C3.89543 6 3 6.89543 3 8V16C3 17.1046 3.89543 18 5 18H19C20.1046 18 21 17.1046 21 16Z" stroke="currentColor" stroke-width="2"/>
+          <path d="M10 9H14M10 12H12M10 15H11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        Codex 配置
+      </button>
+    </div>
+
     <div class="content">
-      <!-- Smart Suggestion Banner -->
-      <transition name="slide-fade">
-        <div v-if="smartSuggestion" class="smart-suggestion">
-          <div class="suggestion-icon">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <linearGradient id="starGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stop-color="#ffffff"/>
-                  <stop offset="100%" stop-color="#e2e8f0"/>
-                </linearGradient>
-                <filter id="starGlow" x="-50%" y="-50%" width="200%" height="200%">
-                  <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur"/>
-                  <feMerge>
-                    <feMergeNode in="blur"/>
-                    <feMergeNode in="SourceGraphic"/>
-                  </feMerge>
-                </filter>
-              </defs>
-              <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="url(#starGradient)" filter="url(#starGlow)"/>
-            </svg>
-          </div>
-          <div class="suggestion-content">
-            <div class="suggestion-title">AI 智能提示</div>
-            <div class="suggestion-text">{{ smartSuggestion }}</div>
-          </div>
-          <button class="suggestion-close" @click="smartSuggestion = ''">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-          </button>
-        </div>
-      </transition>
+      <transition name="fade" mode="out-in" @enter="handleTabEnter">
+        <!-- Claude Configuration Tab -->
+        <div v-if="activeTab === 'claude'" key="claude" class="tab-content">
+          <!-- Smart Suggestion Banner -->
+          <transition name="slide-fade">
+            <div v-if="smartSuggestion" class="smart-suggestion">
+              <div class="suggestion-icon">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <linearGradient id="starGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stop-color="#ffffff"/>
+                      <stop offset="100%" stop-color="#e2e8f0"/>
+                    </linearGradient>
+                    <filter id="starGlow" x="-50%" y="-50%" width="200%" height="200%">
+                      <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur"/>
+                      <feMerge>
+                        <feMergeNode in="blur"/>
+                        <feMergeNode in="SourceGraphic"/>
+                      </feMerge>
+                    </filter>
+                  </defs>
+                  <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="url(#starGradient)" filter="url(#starGlow)"/>
+                </svg>
+              </div>
+              <div class="suggestion-content">
+                <div class="suggestion-title">AI 智能提示</div>
+                <div class="suggestion-text">{{ smartSuggestion }}</div>
+              </div>
+              <button class="suggestion-close" @click="smartSuggestion = ''">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </button>
+            </div>
+          </transition>
 
       <el-form label-position="top" class="config-form">
         <!-- API Token with smart hint -->
@@ -278,6 +296,13 @@
           </div>
         </el-form>
       </div>
+        </div>
+
+        <!-- Codex Configuration Tab -->
+        <div v-else key="codex" class="tab-content">
+          <CodexConfigView />
+        </div>
+      </transition>
     </div>
   </div>
 </template>
@@ -286,9 +311,15 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useConfigStore } from '@/stores/config.store'
+import { useCodexStore } from '@/stores/codex.store'
 import EnvVarEditor from '@/components/EnvVarEditor.vue'
+import CodexConfigView from '@/components/CodexConfigView.vue'
+import logoUrl from '@/assets/logo.svg?url'
 
 const configStore = useConfigStore()
+const codexStore = useCodexStore()
+
+const activeTab = ref<'claude' | 'codex'>('claude')
 
 const configPath = computed(() => configStore.configPath)
 const statusMessage = computed(() => configStore.statusMessage)
@@ -316,6 +347,12 @@ onMounted(async () => {
   await configStore.loadPresets()
   await configStore.loadConfigPath()
 
+  await codexStore.loadConfig()
+  await codexStore.loadAuth()
+  await codexStore.loadPresets()
+  await codexStore.loadPaths()
+  await codexStore.loadConfigRaw()
+
   tokenValue.value = configStore.token
   urlValue.value = configStore.baseUrl
   modelValue.value = configStore.config.model
@@ -342,13 +379,18 @@ watch(statusMessage, () => {
   }
 })
 
-function animateElements() {
-  const elements = document.querySelectorAll('[data-animate]')
+function animateElements(root: ParentNode = document) {
+  const elements = root.querySelectorAll('[data-animate]')
   elements.forEach((el, index) => {
     setTimeout(() => {
       el.classList.add('animate-in')
     }, index * 100)
   })
+}
+
+function handleTabEnter(el: Element) {
+  // Wait one frame so the entering tab's DOM is present, then trigger animations.
+  requestAnimationFrame(() => animateElements(el))
 }
 
 // Smart hints for token
@@ -953,5 +995,49 @@ async function handleSavePreset() {
 .fade-leave-to {
   opacity: 0;
   transform: translateY(-10px);
+}
+
+/* Tab Switcher */
+.tab-switcher {
+  display: flex;
+  gap: 8px;
+  padding: 0 40px;
+  margin-bottom: 20px;
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-dim);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tab-btn:hover {
+  color: var(--text-normal);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.tab-btn.active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+}
+
+.tab-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.tab-content {
+  width: 100%;
 }
 </style>

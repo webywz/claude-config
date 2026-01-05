@@ -2,12 +2,14 @@
   "appId": "com.claude.config",
   "productName": "Claude Config",
   "directories": {
+    "buildResources": "build",
     "output": "release"
   },
   "files": [
     "out/**/*"
   ],
   "win": {
+    "icon": "build/icon.ico",
     "target": [
       {
         "target": "nsis",
@@ -26,6 +28,9 @@
   },
   "nsis": {
     "oneClick": false,
-    "allowToChangeInstallationDirectory": true
+    "allowToChangeInstallationDirectory": true,
+    "installerIcon": "build/icon.ico",
+    "uninstallerIcon": "build/icon.ico",
+    "installerHeaderIcon": "build/icon.ico"
   }
 }

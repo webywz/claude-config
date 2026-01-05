@@ -24,10 +24,46 @@ export interface PathEntry {
   type: 'user' | 'system'
 }
 
+// Codex Configuration Types
+export interface CodexConfig {
+  model_provider: string
+  model?: string
+  model_reasoning_effort?: string
+  disable_response_storage?: boolean
+  model_providers: {
+    [key: string]: {
+      base_url?: string
+      api_key?: string
+      [key: string]: any
+    }
+  }
+}
+
+export interface CodexAuth {
+  [key: string]: string
+}
+
+export interface CodexPresets {
+  [key: string]: CodexConfig
+}
+
 export interface ElectronAPI {
   config: {
     load: () => Promise<ClaudeConfig>
     save: (config: ClaudeConfig) => Promise<boolean>
+  }
+  codex: {
+    loadConfig: () => Promise<CodexConfig>
+    saveConfig: (config: CodexConfig) => Promise<boolean>
+    loadAuth: () => Promise<CodexAuth>
+    saveAuth: (auth: CodexAuth) => Promise<boolean>
+    getConfigPath: () => Promise<string>
+    getAuthPath: () => Promise<string>
+    getConfigRaw: () => Promise<string>
+    loadPresets: () => Promise<CodexPresets>
+    savePresets: (presets: CodexPresets) => Promise<boolean>
+    applyPreset: (name: string) => Promise<{ success: boolean; config?: CodexConfig }>
+    deletePreset: (name: string) => Promise<boolean>
   }
   presets: {
     load: () => Promise<Presets>
@@ -37,6 +73,7 @@ export interface ElectronAPI {
   }
   system: {
     openFolder: () => Promise<void>
+    openCodexFolder: () => Promise<void>
     getConfigPath: () => Promise<string>
     getEnvVars: () => Promise<Array<{ name: string; value: string; type: 'user' | 'system' }>>
     setEnvVar: (name: string, value: string) => Promise<boolean>

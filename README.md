@@ -87,6 +87,9 @@ npm run build:all
 
 - 主配置: `~/.claude/settings.json`
 - 预设配置: `~/.claude_presets/presets.json`
+- Codex 配置: `~/.codex/config.toml`
+- Codex Auth: `~/.codex/auth.json`
+- Codex 预设配置: `~/.codex_presets/presets.json`
 
 ## 界面预览
 

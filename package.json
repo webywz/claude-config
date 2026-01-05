@@ -9,13 +9,15 @@
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
-    "build:win": "npm run build && electron-builder --win",
+    "build:win": "node scripts/generate-icons.mjs && npm run build && electron-builder --win",
     "build:mac": "npm run build && electron-builder --mac",
-    "build:all": "npm run build && electron-builder --win --mac"
+    "build:all": "node scripts/generate-icons.mjs && npm run build && electron-builder --win --mac"
   },
   "dependencies": {
+    "electron-updater": "^6.6.2",
     "element-plus": "^2.13.0",
     "pinia": "^2.3.1",
+    "smol-toml": "^1.6.0",
     "vue": "^3.5.26"
   },
   "devDependencies": {
