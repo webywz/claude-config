@@ -2,8 +2,44 @@
   <div :class="['tool-card', { installed: status.installed, installing: status.installing }]">
     <!-- Header -->
     <div class="tool-header">
-      <div class="tool-icon">
-        <component :is="iconComponent" />
+      <div class="tool-icon" :class="`tool-icon-${tool.id}`">
+        <!-- Node.js Icon -->
+        <svg v-if="tool.id === 'nodejs'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#689F63"/>
+          <path d="M2 7L12 12L12 22L2 17L2 7Z" fill="#8BC34A"/>
+          <path d="M22 7L12 12L12 22L22 17L22 7Z" fill="#9CCC65"/>
+          <path d="M12 12V22" stroke="#fff" stroke-width="1"/>
+          <path d="M12 12L2 7" stroke="#fff" stroke-width="1"/>
+          <path d="M12 12L22 7" stroke="#fff" stroke-width="1"/>
+        </svg>
+
+        <!-- Claude Icon -->
+        <svg v-else-if="tool.id === 'claude'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="claude-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#D97706"/>
+              <stop offset="50%" stop-color="#92400E"/>
+              <stop offset="100%" stop-color="#78350F"/>
+            </linearGradient>
+          </defs>
+          <circle cx="12" cy="12" r="10" fill="url(#claude-gradient)"/>
+          <path d="M8 12C8 9.1 8.9 10 10 10C11.1 10 12 9.1 12 8C12 6.9 11.1 6 10 6C8.9 6 8 6.9 8 8Z" fill="#FEF3C7"/>
+          <path d="M16 16C16 17.1 16.9 18 18 18C19.1 18 20 17.1 20 16C20 14.9 19.1 14 18 14C16.9 14 16 14.9 16 16Z" fill="#FEF3C7"/>
+          <path d="M7.5 15C7.5 16.38 8.62 17.5 10 17.5C11.38 17.5 12.5 16.38 12.5 15" stroke="#FEF3C7" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+
+        <!-- Codex Icon -->
+        <svg v-else-if="tool.id === 'codex'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="codex-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#6366F1"/>
+              <stop offset="100%" stop-color="#8B5CF6"/>
+            </linearGradient>
+          </defs>
+          <rect x="3" y="3" width="18" height="18" rx="3" fill="url(#codex-gradient)"/>
+          <path d="M7 8H17M7 12H17M7 16H13" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="15" cy="16" r="2" fill="#FCD34D"/>
+        </svg>
       </div>
       <div class="tool-info">
         <h3 class="tool-name">{{ tool.name }}</h3>
@@ -105,12 +141,6 @@ const stepText = computed(() => {
   }
   return stepMap[props.status.step] || '处理中...'
 })
-
-const iconComponent = computed(() => {
-  // For now, return a placeholder
-  // You can add specific icons for each tool later
-  return 'div'
-})
 </script>
 
 <style scoped>
@@ -155,8 +185,25 @@ const iconComponent = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.tool-icon svg {
+  width: 32px;
+  height: 32px;
+}
+
+.tool-icon-nodejs {
+  background: linear-gradient(135deg, rgba(104, 159, 99, 0.2) 0%, rgba(139, 195, 74, 0.2) 100%);
+}
+
+.tool-icon-claude {
+  background: linear-gradient(135deg, rgba(217, 119, 6, 0.2) 0%, rgba(146, 64, 14, 0.2) 100%);
+}
+
+.tool-icon-codex {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
 }
 
 .tool-info {
