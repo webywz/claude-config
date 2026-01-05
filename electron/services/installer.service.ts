@@ -16,6 +16,7 @@ interface ToolConfig {
   description: string
   verifyCommand: string
   downloadUrl?: string
+  downloadUrls?: string[] // 支持多个下载源（镜像源 + 回退源）
   installCommand?: string
   envPath?: string
   dependsOn?: string[]
@@ -36,9 +37,15 @@ export class InstallerService {
       nodejs: {
         id: 'nodejs',
         name: 'Node.js',
-        description: 'JavaScript 运行时环境',
+        description: 'JavaScript 运行时环境 (v20 LTS)',
         verifyCommand: 'node --version',
-        downloadUrl: 'https://nodejs.org/dist/v20.11.0/node-v20.11.0-{platform}-{arch}.msi',
+        // 国内镜像源 + 官方回退源
+        downloadUrls: [
+          // 主镜像：npmmirror.com (国内快速)
+          'https://npmmirror.com/mirrors/node/v20.11.0/node-v20.11.0-{platform}-{arch}.msi',
+          // 回退源：官方源
+          'https://nodejs.org/dist/v20.11.0/node-v20.11.0-{platform}-{arch}.msi'
+        ],
         installCommand: 'msiexec /i "{installer}" /quiet /norestart INSTALLDIR="{installDir}"',
         envPath: '{installDir}'
       },
@@ -55,7 +62,13 @@ export class InstallerService {
         name: 'Codex CLI',
         description: 'Codex 命令行工具',
         verifyCommand: 'codex --version',
-        downloadUrl: 'https://github.com/anthropics/codex/releases/latest/download/codex-{platform}-{arch}.exe',
+        // 国内 GitHub 代理 + 官方回退源
+        downloadUrls: [
+          // 主镜像：ghproxy.com GitHub 代理 (国内快速)
+          'https://ghproxy.com/https://github.com/anthropics/codex/releases/latest/download/codex-{platform}-{arch}.exe',
+          // 回退源 1：GitHub 官方
+          'https://github.com/anthropics/codex/releases/latest/download/codex-{platform}-{arch}.exe'
+        ],
         installCommand: '"{installer}" /S /D="{installDir}"',
         envPath: '{installDir}',
         dependsOn: ['nodejs']
@@ -106,11 +119,25 @@ export class InstallerService {
     return new Promise((resolve, reject) => {
       const protocol = url.startsWith('https') ? https : http
       const tempPath = savePath + '.tmp'
+      let timeoutTimer: NodeJS.Timeout | null = null
 
       // Mark download as active
       this.activeDownloads.set(toolId, true)
 
-      protocol.get(url, (response) => {
+      const requestOptions = {
+        timeout: 60000, // 60秒超时
+        headers: {
+          'User-Agent': 'Claude-Config-Installer/1.0'
+        }
+      }
+
+      const request = protocol.get(url, requestOptions, (response) => {
+        // 清除连接超时定时器
+        if (timeoutTimer) {
+          clearTimeout(timeoutTimer)
+          timeoutTimer = null
+        }
+
         if (response.statusCode === 302 || response.statusCode === 301) {
           // Follow redirect
           const redirectUrl = response.headers.location
@@ -131,14 +158,19 @@ export class InstallerService {
 
         const totalSize = parseInt(response.headers['content-length'] || '0', 10)
         let downloadedSize = 0
+        let lastProgressUpdate = 0
 
         const file = createWriteStream(tempPath)
 
         response.on('data', (chunk: Buffer) => {
           downloadedSize += chunk.length
-          if (totalSize > 0) {
+          const now = Date.now()
+
+          // 限制进度更新频率（每 500ms 最多一次）
+          if (now - lastProgressUpdate > 500 && totalSize > 0) {
             const progress = Math.round((downloadedSize / totalSize) * 100)
             this.sendProgress(toolId, 'downloading', progress, `下载中... ${progress}%`)
+            lastProgressUpdate = now
           }
         })
 
@@ -156,9 +188,25 @@ export class InstallerService {
           unlinkSync(tempPath).catch(() => {})
           reject(err)
         })
-      }).on('error', (err) => {
+      })
+
+      request.on('timeout', () => {
+        request.destroy()
+        reject(new Error('连接超时 (60s)'))
+      })
+
+      request.on('error', (err) => {
+        if (timeoutTimer) {
+          clearTimeout(timeoutTimer)
+        }
         reject(err)
       })
+
+      // 设置整体下载超时（5分钟）
+      timeoutTimer = setTimeout(() => {
+        request.destroy()
+        reject(new Error('下载超时 (5min)'))
+      }, 300000)
     })
   }
 
@@ -218,28 +266,61 @@ export class InstallerService {
   // 下载安装包
   async downloadTool(toolId: string): Promise<string> {
     const config = this.getToolConfig(toolId)
-    if (!config || !config.downloadUrl) {
-      throw new Error('Tool does not support downloading')
+    if (!config) {
+      throw new Error('Unknown tool')
     }
 
-    const url = this.formatDownloadUrl(config.downloadUrl)
+    // 获取下载 URL 列表（兼容新旧格式）
+    let urls: string[] = []
+    if (config.downloadUrls && config.downloadUrls.length > 0) {
+      urls = config.downloadUrls.map(url => this.formatDownloadUrl(url))
+    } else if (config.downloadUrl) {
+      urls = [this.formatDownloadUrl(config.downloadUrl)]
+    } else {
+      throw new Error('Tool does not support downloading')
+    }
 
     const cacheDir = join(homedir(), '.claude-config', 'cache')
     if (!existsSync(cacheDir)) {
       mkdirSync(cacheDir, { recursive: true })
     }
 
-    this.sendProgress(toolId, 'downloading', 0, '开始下载...')
-
-    const filename = this.getInstallerFilename(toolId, url)
+    const filename = this.getInstallerFilename(toolId, urls[0])
     const savePath = join(cacheDir, filename)
 
-    await this.downloadFile(url, savePath, toolId)
+    // 尝试所有下载源，直到成功
+    let lastError: Error | null = null
+    for (let i = 0; i < urls.length; i++) {
+      const url = urls[i]
+      const sourceName = i === 0 ? '主镜像源' : `备用源 ${i}`
 
-    this.installCache.set(toolId, savePath)
-    this.sendProgress(toolId, 'downloading', 100, '下载完成')
+      try {
+        this.sendProgress(toolId, 'downloading', 0, `尝试 ${sourceName}...`)
+        await this.downloadFile(url, savePath, toolId)
+        this.sendProgress(toolId, 'downloading', 100, `下载完成 (${sourceName})`)
+        this.installCache.set(toolId, savePath)
+        return savePath
+      } catch (error) {
+        lastError = error as Error
+        console.error(`下载失败 (${sourceName}):`, error)
 
-    return savePath
+        // 如果还有更多源，继续尝试
+        if (i < urls.length - 1) {
+          this.sendProgress(toolId, 'downloading', 0, `${sourceName} 失败，尝试下一个源...`)
+          // 清理可能的部分下载文件
+          try {
+            if (existsSync(savePath)) {
+              unlinkSync(savePath)
+            }
+          } catch {}
+        }
+      }
+    }
+
+    // 所有源都失败
+    const errorMsg = `所有下载源均失败: ${lastError?.message || 'Unknown error'}`
+    this.sendProgress(toolId, 'failed', 0, errorMsg)
+    throw new Error(errorMsg)
   }
 
   // 获取安装包文件名
