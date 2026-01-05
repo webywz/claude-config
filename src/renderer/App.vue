@@ -47,6 +47,18 @@
         </svg>
         一键安装
       </button>
+      <button
+        :class="['tab-btn', { active: activeTab === 'envvar' }]"
+        @click="activeTab = 'envvar'"
+      >
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M12 12V22" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+        </svg>
+        环境变量
+      </button>
     </div>
 
     <div class="content">
@@ -200,13 +212,6 @@
           </el-form-item>
         </div>
 
-        <!-- Environment Variables Editor -->
-        <div class="form-group" data-animate="4.5">
-          <el-form-item label="Windows 环境变量">
-            <EnvVarEditor />
-          </el-form-item>
-        </div>
-
         <!-- Action Buttons -->
         <div class="form-group button-group" data-animate="5">
           <el-button type="primary" size="large" @click="handleSave" :loading="saving">
@@ -313,8 +318,13 @@
         </div>
 
         <!-- One-Click Installer Tab -->
-        <div v-else key="installer" class="tab-content installer-tab">
+        <div v-else-if="activeTab === 'installer'" key="installer" class="tab-content installer-tab">
           <OneClickInstaller />
+        </div>
+
+        <!-- Environment Variables Tab -->
+        <div v-else key="envvar" class="tab-content envvar-tab">
+          <EnvVarView />
         </div>
       </transition>
     </div>
@@ -326,15 +336,15 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useConfigStore } from '@/stores/config.store'
 import { useCodexStore } from '@/stores/codex.store'
-import EnvVarEditor from '@/components/EnvVarEditor.vue'
 import CodexConfigView from '@/components/CodexConfigView.vue'
 import OneClickInstaller from '@/components/OneClickInstaller.vue'
+import EnvVarView from '@/components/EnvVarView.vue'
 import logoUrl from '@/assets/logo.svg?url'
 
 const configStore = useConfigStore()
 const codexStore = useCodexStore()
 
-const activeTab = ref<'claude' | 'codex' | 'installer'>('claude')
+const activeTab = ref<'claude' | 'codex' | 'installer' | 'envvar'>('claude')
 
 const configPath = computed(() => configStore.configPath)
 const statusMessage = computed(() => configStore.statusMessage)
@@ -1057,6 +1067,11 @@ async function handleSavePreset() {
 }
 
 .installer-tab {
+  max-width: none;
+  padding: 0;
+}
+
+.envvar-tab {
   max-width: none;
   padding: 0;
 }
