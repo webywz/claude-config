@@ -36,6 +36,15 @@ const api: ElectronAPI = {
     addPath: (path) => ipcRenderer.invoke('system:add-path', path),
     removePath: (path) => ipcRenderer.invoke('system:remove-path', path),
     movePath: (from, to) => ipcRenderer.invoke('system:move-path', from, to)
+  },
+  installer: {
+    checkTool: (toolId) => ipcRenderer.invoke('installer:check-tool', toolId),
+    checkAllTools: () => ipcRenderer.invoke('installer:check-all'),
+    downloadTool: (toolId) => ipcRenderer.invoke('installer:download', toolId),
+    installTool: (toolId, installerPath) => ipcRenderer.invoke('installer:install', toolId, installerPath),
+    configureToolEnv: (toolId, toolPath) => ipcRenderer.invoke('installer:configure-env', toolId, toolPath),
+    verifyInstallation: (toolId) => ipcRenderer.invoke('installer:verify', toolId),
+    cancelInstallation: (toolId) => ipcRenderer.invoke('installer:cancel', toolId)
   }
 }
 

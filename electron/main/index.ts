@@ -7,6 +7,7 @@ import { join as pathJoin, dirname } from 'path'
 import { homedir } from 'os'
 import { execSync } from 'child_process'
 import { CodexConfigManager } from '../config/codex-config-manager'
+import { InstallerService } from '../services/installer.service'
 import { autoUpdater } from 'electron-updater'
 import type { CodexConfig, CodexAuth } from '../config/types'
 
@@ -588,6 +589,45 @@ ipcMain.handle('system:move-path', (_, fromIndex: number, toIndex: number): bool
   return moveUserPath(fromIndex, toIndex)
 })
 
+// Installer Service
+let installerService: InstallerService | null = null
+
+// Installer IPC Handlers
+ipcMain.handle('installer:check-tool', async (_, toolId: string) => {
+  if (!installerService) return { installed: false, error: 'Installer service not initialized' }
+  return await installerService.checkTool(toolId)
+})
+
+ipcMain.handle('installer:check-all', async () => {
+  if (!installerService) return {}
+  return await installerService.checkAllTools()
+})
+
+ipcMain.handle('installer:download', async (_, toolId: string) => {
+  if (!installerService) throw new Error('Installer service not initialized')
+  return await installerService.downloadTool(toolId)
+})
+
+ipcMain.handle('installer:install', async (_, toolId: string, installerPath?: string) => {
+  if (!installerService) return false
+  return await installerService.installTool(toolId, installerPath)
+})
+
+ipcMain.handle('installer:configure-env', async (_, toolId: string, toolPath: string) => {
+  if (!installerService) return false
+  return await installerService.configureToolEnv(toolId)
+})
+
+ipcMain.handle('installer:verify', async (_, toolId: string) => {
+  if (!installerService) return false
+  return await installerService.verifyInstallation(toolId)
+})
+
+ipcMain.handle('installer:cancel', async (_, toolId: string) => {
+  if (!installerService) return
+  await installerService.cancelInstallation(toolId)
+})
+
 // Window Management
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -611,6 +651,9 @@ function createWindow(): void {
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
   })
+
+  // Initialize installer service
+  installerService = new InstallerService(mainWindow)
 
   setupAutoUpdater(mainWindow)
 

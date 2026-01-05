@@ -47,6 +47,30 @@ export interface CodexPresets {
   [key: string]: CodexConfig
 }
 
+// Installer Types
+export interface ToolInstallInfo {
+  installed: boolean
+  version?: string
+  path?: string
+  error?: string
+}
+
+export type InstallStep =
+  | 'checking'
+  | 'downloading'
+  | 'installing'
+  | 'configuring'
+  | 'verifying'
+  | 'completed'
+  | 'failed'
+
+export interface InstallProgress {
+  toolId: string
+  step: InstallStep
+  progress: number
+  message: string
+}
+
 export interface ElectronAPI {
   config: {
     load: () => Promise<ClaudeConfig>
@@ -82,5 +106,14 @@ export interface ElectronAPI {
     addPath: (path: string) => Promise<boolean>
     removePath: (path: string) => Promise<boolean>
     movePath: (fromIndex: number, toIndex: number) => Promise<boolean>
+  }
+  installer: {
+    checkTool: (toolId: string) => Promise<ToolInstallInfo>
+    checkAllTools: () => Promise<Record<string, ToolInstallInfo>>
+    downloadTool: (toolId: string) => Promise<string>
+    installTool: (toolId: string, installerPath: string) => Promise<boolean>
+    configureToolEnv: (toolId: string, toolPath: string) => Promise<boolean>
+    verifyInstallation: (toolId: string) => Promise<boolean>
+    cancelInstallation: (toolId: string) => Promise<void>
   }
 }
