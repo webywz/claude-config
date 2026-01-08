@@ -112,7 +112,7 @@ export const useConfigStore = defineStore('config', () => {
 
   function updateToken(value: string) {
     if (value) {
-      config.value.env.ANTHROPIC_AUTH_TOKEN = value
+      config.value.env.ANTHROPIC_API_KEY = value
     } else {
       delete config.value.env.ANTHROPIC_AUTH_TOKEN
       delete config.value.env.ANTHROPIC_API_KEY

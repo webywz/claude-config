@@ -101,7 +101,7 @@
       <el-form label-position="top" class="config-form">
         <!-- API Token with smart hint -->
         <div class="form-group" data-animate="1">
-          <el-form-item label="API Token">
+          <el-form-item label="ANTHROPIC_API_KEY">
             <el-input
               v-model="tokenValue"
               type="password"
@@ -144,7 +144,7 @@
         <!-- Model Selection -->
         <div class="form-group" data-animate="3">
           <el-form-item label="Model">
-            <el-select v-model="modelValue" placeholder="选择模型..." filterable>
+            <el-select v-model="modelValue" placeholder="选择或输入模型..." filterable allow-create default-first-option>
               <el-option-group label="Claude 4.5 系列">
                 <el-option label="Claude Opus 4.5 (最强)" value="claude-opus-4-5-20251101" />
                 <el-option label="Claude Opus 4.5 Thinking (深度推理)" value="claude-opus-4-5-20251101-thinking" />
