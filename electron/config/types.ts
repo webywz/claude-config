@@ -125,6 +125,7 @@ export interface ElectronAPI {
     create: (input: SkillCreateInput) => Promise<{ success: boolean; message: string }>
     delete: (skillName: string) => Promise<{ success: boolean; message: string }>
     import: (filePath: string, targetProviders: SkillProvider[]) => Promise<{ success: boolean; message: string }>
+    copy: (skillNames: string[], targetPath: string) => Promise<{ success: boolean; message: string }>
   }
   webUtils: {
     getPathForFile: (file: File) => string

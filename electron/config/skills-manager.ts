@@ -333,6 +333,67 @@ ${description || 'No description provided'}
         }
     }
 
+    public async copySkills(skillNames: string[], targetPath: string): Promise<{ success: boolean, message: string }> {
+        try {
+            if (!skillNames || skillNames.length === 0) {
+                return { success: false, message: 'No skills selected' }
+            }
+            if (!targetPath) {
+                return { success: false, message: 'No target directory selected' }
+            }
+
+            // Ensure target directory exists
+            if (!existsSync(targetPath)) {
+                // Option: create it? Or strict check? User said "select folder", so it usually exists.
+                // But if they typed a path, maybe create. Let's try to mkdir recursive just in case.
+                try {
+                    mkdirSync(targetPath, { recursive: true })
+                } catch (e) {
+                    return { success: false, message: `Target path issue: ${e}` }
+                }
+            }
+
+            // 1. Locate source paths for each skill
+            const skillSources = new Map<string, string>() // skillName -> fullPath
+
+            for (const skillName of skillNames) {
+                // Find first provider that has this skill
+                for (const [provider, path] of Object.entries(this.providers)) {
+                    if (!existsSync(path)) continue
+                    const candidatePath = join(path, skillName)
+                    if (existsSync(candidatePath) && statSync(candidatePath).isDirectory()) {
+                        skillSources.set(skillName, candidatePath)
+                        break // Found a source, stop looking
+                    }
+                }
+            }
+
+            if (skillSources.size === 0) {
+                return { success: false, message: 'Could not find any of the selected skills on disk' }
+            }
+
+            // 2. Copy to target folder
+            let copyCount = 0
+            for (const [name, sourcePath] of skillSources) {
+                const destPath = join(targetPath, name)
+
+                // Copy
+                if (existsSync(destPath)) {
+                    // cleaning destination first ensures clean copy
+                    rmSync(destPath, { recursive: true, force: true })
+                }
+
+                this.copyFolderSync(sourcePath, destPath)
+                copyCount++
+            }
+
+            return { success: true, message: `Successfully copied ${copyCount} skills to ${targetPath}` }
+        } catch (error) {
+            console.error('Copy skills failed:', error)
+            return { success: false, message: `Copy failed: ${error}` }
+        }
+    }
+
     private copyFolderSync(from: string, to: string) {
         if (!existsSync(to)) {
             mkdirSync(to, { recursive: true })

@@ -62,8 +62,22 @@
 
     <!-- Skills Matrix Table -->
     <div class="skills-matrix glass-panel" data-animate="3" v-loading="loading">
-      <el-table :data="tableData" style="width: 100%" height="calc(100vh - 400px)" :header-cell-style="{ background: 'transparent' }" :row-style="{ background: 'transparent' }">
-        <el-table-column prop="name" label="技能名称" min-width="200" sortable>
+      <div class="table-actions" v-if="selectedSkillNames.length > 0">
+          <span class="selection-count">已选择 {{ selectedSkillNames.length }} 项</span>
+          <el-button color="#8B5CF6" :dark="true" size="small" @click="handleCopyClick" class="action-btn" round>
+            复制到...
+          </el-button>
+      </div>
+      <el-table 
+        :data="tableData" 
+        style="width: 100%" 
+        height="calc(100vh - 400px)" 
+        :header-cell-style="{ background: 'transparent' }" 
+        :row-style="{ background: 'transparent' }"
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column type="selection" width="55" align="center" />
+        <el-table-column prop="name" label="技能名称" min-width="200" sortable header-align="center">
           <template #default="{ row }">
             <div class="skill-name-cell">
               <div class="skill-icon-wrapper">
@@ -155,6 +169,27 @@
          </div>
     </el-dialog>
 
+    <!-- Copy Skills Dialog -->
+    <el-dialog v-model="showCopyDialog" title="复制技能" width="450px" class="glass-dialog">
+        <p class="dialog-subtitle">将选中的 {{ selectedSkillNames.length }} 个技能复制到：</p>
+        
+        <div class="target-path-selector" @click="handleSelectCopyTarget">
+             <div class="path-display" :class="{ 'has-value': copyTargetPath }">
+                 {{ copyTargetPath || '点击选择目标文件夹...' }}
+             </div>
+             <el-button type="primary" style="color: #fff;" plain>选择</el-button>
+        </div>
+
+         <template #footer>
+            <span class="dialog-footer">
+              <el-button @click="showCopyDialog = false">取消</el-button>
+              <el-button type="primary" :loading="copying" @click="handleCopy" :disabled="!copyTargetPath">
+                立即复制
+              </el-button>
+            </span>
+          </template>
+    </el-dialog>
+
     <!-- Status Message -->
     <transition name="slide-up">
       <div v-if="statusMessage" :class="['status-toast', statusMessage.type]">
@@ -172,6 +207,7 @@
 import { computed, onMounted, ref, reactive } from 'vue'
 import { useSkillsStore } from '../stores/skills.store'
 import type { SkillProvider } from '../../../electron/config/types'
+import { shallowRef } from 'vue'
 
 const store = useSkillsStore()
 const providerList: SkillProvider[] = ['claude', 'codex', 'gemini', 'antigravity', 'trae']
@@ -195,6 +231,15 @@ const showImportDialog = ref(false)
 const importTargetProviders = ref<SkillProvider[]>(['claude'])
 const fileInput = ref<HTMLInputElement | null>(null)
 const dragOver = ref(false)
+
+// Copy State
+const showCopyDialog = ref(false)
+const copyTargetPath = ref('')
+const copying = ref(false)
+const selectedSkillNames = ref<string[]>([])
+
+// Icons (Using inline SVGs usually, but if we need dynamic icons we can define components)
+// For simplicity in this setup, I won't introduce extra icon imports, just reuse logic
 
 const isFormValid = computed(() => {
   return newSkill.name && newSkill.providers.length > 0
@@ -254,6 +299,51 @@ async function handleCreate() {
 
 function handleDelete(name: string) {
   store.deleteSkill(name)
+}
+
+// Selection Logic
+function handleSelectionChange(selection: any[]) {
+    selectedSkillNames.value = selection.map(item => item.name)
+}
+
+// Copy Logic
+function handleCopyClick() {
+    copyTargetPath.value = ''
+    showCopyDialog.value = true
+}
+
+async function handleSelectCopyTarget() {
+    try {
+        if (!window.electronAPI?.system?.showOpenDialog) {
+             throw new Error('API not available')
+        }
+        
+        const result = await window.electronAPI.system.showOpenDialog({
+            properties: ['openDirectory', 'createDirectory'],
+            title: '选择目标文件夹'
+        })
+
+        if (!result.canceled && result.filePaths.length > 0) {
+            copyTargetPath.value = result.filePaths[0]
+        }
+    } catch (e) {
+        console.error('Select target failed', e)
+        store.statusMessage = { type: 'error', text: '无法打开文件夹选择器' }
+    }
+}
+
+async function handleCopy() {
+    copying.value = true
+    // Ensure we passed a plain array of strings, not a proxy
+    const names = [...selectedSkillNames.value]
+    const success = await store.copySkills(names, copyTargetPath.value)
+    copying.value = false
+    
+    if (success) {
+        showCopyDialog.value = false
+        // Clear selection logic if possible, but element-plus table selection is tricky to clear from outside without ref to table. 
+        // We'll leave it selected for now or user can unselect.
+    }
 }
 
 // Import Logic
@@ -576,6 +666,36 @@ onMounted(() => {
     gap: 10px;
 }
 
+.target-path-selector {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding: 10px;
+    background: rgba(0,0,0,0.1);
+    border-radius: 8px;
+    align-items: center;
+    border: 1px dashed var(--border-color);
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+.target-path-selector:hover {
+    border-color: #8B5CF6;
+}
+.path-display {
+    flex: 1;
+    font-size: 13px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    direction: rtl;
+    text-align: left;
+}
+.path-display.has-value {
+    color: var(--text-primary);
+    font-family: monospace;
+}
+
 .import-drop-zone {
     border: 2px dashed var(--border-color);
     border-radius: 12px;
@@ -649,5 +769,51 @@ onMounted(() => {
 .slide-up-leave-to {
   opacity: 0;
   transform: translate(-50%, 20px);
+}
+
+/* Table Selection Actions Bar */
+.table-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  background: rgba(139, 92, 246, 0.1);
+  border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+  margin: -4px -4px 10px -4px; /* Counteract panel padding */
+  border-radius: 16px 16px 0 0;
+  animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.selection-count {
+  font-weight: 600;
+  font-size: 14px;
+  color: #c4b5fd;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.selection-count::before {
+    content: '';
+    display: block;
+    width: 6px;
+    height: 6px;
+    background: #8B5CF6;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #8B5CF6;
+}
+
+.action-btn {
+    transition: all 0.2s;
+    font-weight: 500;
+}
+.action-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
 }
 </style>

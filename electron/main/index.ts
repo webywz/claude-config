@@ -660,6 +660,10 @@ ipcMain.handle('skills:delete', (_, skillName: string): { success: boolean, mess
   return skillsManager.deleteSkill(skillName)
 })
 
+ipcMain.handle('skills:copy', async (_, skillNames: string[], targetPath: string): Promise<{ success: boolean, message: string }> => {
+  return await skillsManager.copySkills(skillNames, targetPath)
+})
+
 ipcMain.handle('system:show-open-dialog', async (_, options: Electron.OpenDialogOptions): Promise<Electron.OpenDialogReturnValue> => {
   return await dialog.showOpenDialog(options)
 })

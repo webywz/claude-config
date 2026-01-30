@@ -24,6 +24,15 @@ export const useSkillsStore = defineStore('skills', () => {
     const syncing = ref(false)
     const statusMessage = ref<{ type: 'success' | 'error', text: string } | null>(null)
 
+    let statusTimeout: NodeJS.Timeout | null = null
+    function setStatus(type: 'success' | 'error', text: string) {
+        if (statusTimeout) clearTimeout(statusTimeout)
+        statusMessage.value = { type, text }
+        statusTimeout = setTimeout(() => {
+            statusMessage.value = null
+        }, 3000)
+    }
+
     async function scan() {
         loading.value = true
         try {
@@ -35,7 +44,7 @@ export const useSkillsStore = defineStore('skills', () => {
             paths.value = pathResult
         } catch (error: any) {
             console.error('Failed to scan skills:', error)
-            statusMessage.value = { type: 'error', text: `扫描 Skills 失败: ${error.message || error}` }
+            setStatus('error', `扫描 Skills 失败: ${error.message || error}`)
         } finally {
             loading.value = false
         }
@@ -46,14 +55,14 @@ export const useSkillsStore = defineStore('skills', () => {
         try {
             const result = await window.electronAPI.skills.sync(targets)
             if (result.success) {
-                statusMessage.value = { type: 'success', text: result.message }
+                setStatus('success', result.message)
                 await scan() // Rescan to update UI
             } else {
-                statusMessage.value = { type: 'error', text: result.message }
+                setStatus('error', result.message)
             }
         } catch (error) {
             console.error('Failed to sync skills:', error)
-            statusMessage.value = { type: 'error', text: '同步失败' }
+            setStatus('error', '同步失败')
         } finally {
             syncing.value = false
         }
@@ -64,16 +73,16 @@ export const useSkillsStore = defineStore('skills', () => {
         try {
             const result = await window.electronAPI.skills.create(input)
             if (result.success) {
-                statusMessage.value = { type: 'success', text: result.message }
+                setStatus('success', result.message)
                 await scan()
                 return true
             } else {
-                statusMessage.value = { type: 'error', text: result.message }
+                setStatus('error', result.message)
                 return false
             }
         } catch (error) {
             console.error('Failed to create skill:', error)
-            statusMessage.value = { type: 'error', text: `创建失败: ${error instanceof Error ? error.message : String(error)}` }
+            setStatus('error', `创建失败: ${error instanceof Error ? error.message : String(error)}`)
             return false
         } finally {
             loading.value = false
@@ -85,16 +94,16 @@ export const useSkillsStore = defineStore('skills', () => {
         try {
             const result = await window.electronAPI.skills.import(filePath, targetProviders)
             if (result.success) {
-                statusMessage.value = { type: 'success', text: result.message }
+                setStatus('success', result.message)
                 await scan()
                 return true
             } else {
-                statusMessage.value = { type: 'error', text: result.message }
+                setStatus('error', result.message)
                 return false
             }
         } catch (error) {
             console.error('Failed to import skill:', error)
-            statusMessage.value = { type: 'error', text: `导入失败: ${error instanceof Error ? error.message : String(error)}` }
+            setStatus('error', `导入失败: ${error instanceof Error ? error.message : String(error)}`)
             return false
         } finally {
             loading.value = false
@@ -108,14 +117,35 @@ export const useSkillsStore = defineStore('skills', () => {
         try {
             const result = await window.electronAPI.skills.delete(name)
             if (result.success) {
-                statusMessage.value = { type: 'success', text: result.message }
+                setStatus('success', result.message)
                 await scan()
             } else {
-                statusMessage.value = { type: 'error', text: result.message }
+                setStatus('error', result.message)
             }
         } catch (error) {
             console.error('Failed to delete skill:', error)
-            statusMessage.value = { type: 'error', text: `删除失败: ${error instanceof Error ? error.message : String(error)}` }
+            setStatus('error', `删除失败: ${error instanceof Error ? error.message : String(error)}`)
+        } finally {
+            loading.value = false
+        }
+    }
+
+    async function copySkills(names: string[], targetPath: string) {
+        loading.value = true
+        try {
+            const result = await window.electronAPI.skills.copy(names, targetPath)
+            if (result.success) {
+                setStatus('success', result.message)
+                await scan()
+                return true
+            } else {
+                setStatus('error', result.message)
+                return false
+            }
+        } catch (error) {
+            console.error('Failed to copy skills:', error)
+            setStatus('error', `复制失败: ${error instanceof Error ? error.message : String(error)}`)
+            return false
         } finally {
             loading.value = false
         }
@@ -123,6 +153,7 @@ export const useSkillsStore = defineStore('skills', () => {
 
     function clearStatus() {
         statusMessage.value = null
+        if (statusTimeout) clearTimeout(statusTimeout)
     }
 
     return {
@@ -137,6 +168,7 @@ export const useSkillsStore = defineStore('skills', () => {
         create,
         importSkill,
         deleteSkill,
+        copySkills,
         clearStatus
     }
 })

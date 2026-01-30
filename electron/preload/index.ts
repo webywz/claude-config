@@ -54,7 +54,8 @@ const api: ElectronAPI = {
     getPaths: () => ipcRenderer.invoke('skills:get-paths'),
     create: (input) => ipcRenderer.invoke('skills:create', input),
     delete: (skillName) => ipcRenderer.invoke('skills:delete', skillName),
-    import: (filePath, targetProviders) => ipcRenderer.invoke('skills:import', filePath, targetProviders)
+    import: (filePath, targetProviders) => ipcRenderer.invoke('skills:import', filePath, targetProviders),
+    copy: (skillNames, targetPath) => ipcRenderer.invoke('skills:copy', skillNames, targetPath)
   },
   webUtils: {
     getPathForFile: (file: File) => webUtils.getPathForFile(file)
