@@ -1,331 +1,176 @@
 <template>
   <div class="app-container">
-    <!-- AI Avatar Header -->
-    <div class="ai-header" :class="{ 'glow-effect': isActive }">
-      <div class="ai-avatar-container">
-        <div class="ai-avatar">
-          <img class="ai-icon" :src="logoUrl" alt="Claude Config" />
-          <div class="ai-pulse" v-if="loading"></div>
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-container">
+          <img class="app-logo" :src="logoUrl" alt="AI 智控中心" />
         </div>
-        <div class="ai-status" :class="{ online: !loading }"></div>
+        <div class="app-title">
+          <h1>AI 智控中心</h1>
+          <span class="version-tag">v1.0</span>
+        </div>
       </div>
-      <div class="header-text">
-        <h1 class="title">Claude Code Settings</h1>
-        <p class="subtitle">{{ configPath || 'Loading...' }}</p>
+
+      <nav class="sidebar-nav">
+        <button 
+          v-for="tab in tabs" 
+          :key="tab.id"
+          :class="['nav-item', { active: activeTab === tab.id }]"
+          @click="activeTab = tab.id"
+        >
+          <div class="nav-icon" v-html="tab.icon"></div>
+          <span class="nav-label">{{ tab.label }}</span>
+          <div class="active-indicator" v-if="activeTab === tab.id"></div>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="status-indicator" :class="{ online: !loading }">
+          <span class="status-dot"></span>
+          <span class="status-text">{{ loading ? '加载中...' : '系统在线' }}</span>
+        </div>
       </div>
-    </div>
+    </aside>
 
-    <!-- Tab Switcher -->
-    <div class="tab-switcher">
-      <button
-        :class="['tab-btn', { active: activeTab === 'claude' }]"
-        @click="activeTab = 'claude'"
-      >
-        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        Claude 配置
-      </button>
-      <button
-        :class="['tab-btn', { active: activeTab === 'codex' }]"
-        @click="activeTab = 'codex'"
-      >
-        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M21 16V8C21 6.89543 20.1046 6 19 6H5C3.89543 6 3 6.89543 3 8V16C3 17.1046 3.89543 18 5 18H19C20.1046 18 21 17.1046 21 16Z" stroke="currentColor" stroke-width="2"/>
-          <path d="M10 9H14M10 12H12M10 15H11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-        Codex 配置
-      </button>
-      <button
-        :class="['tab-btn', { active: activeTab === 'skills' }]"
-        @click="activeTab = 'skills'"
-      >
-        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M4 12C4 7.58172 7.58172 4 12 4C16.4183 4 20 7.58172 20 12M4 12C4 16.4183 7.58172 20 12 20C16.4183 20 20 16.4183 20 12M4 12H2M20 12H22M12 4V2M12 20V22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          <path d="M12 8L12 16M8 12L16 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-        Skills 管理
-      </button>
-      <button
-        :class="['tab-btn', { active: activeTab === 'installer' }]"
-        @click="activeTab = 'installer'"
-      >
-        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15M17 9L12 14L7 9M12 3V14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        一键安装
-      </button>
-      <button
-        :class="['tab-btn', { active: activeTab === 'envvar' }]"
-        @click="activeTab = 'envvar'"
-      >
-        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-          <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-          <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-          <path d="M12 12V22" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-        </svg>
-        环境变量
-      </button>
-    </div>
-
-    <div class="content">
-      <transition name="fade" mode="out-in" @enter="handleTabEnter">
-        <!-- Claude Configuration Tab -->
-        <div v-if="activeTab === 'claude'" key="claude" class="tab-content">
-          <!-- Smart Suggestion Banner -->
-          <transition name="slide-fade">
-            <div v-if="smartSuggestion" class="smart-suggestion">
-              <div class="suggestion-icon">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <defs>
-                    <linearGradient id="starGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" stop-color="#ffffff"/>
-                      <stop offset="100%" stop-color="#e2e8f0"/>
-                    </linearGradient>
-                    <filter id="starGlow" x="-50%" y="-50%" width="200%" height="200%">
-                      <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur"/>
-                      <feMerge>
-                        <feMergeNode in="blur"/>
-                        <feMergeNode in="SourceGraphic"/>
-                      </feMerge>
-                    </filter>
-                  </defs>
-                  <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="url(#starGradient)" filter="url(#starGlow)"/>
-                </svg>
-              </div>
-              <div class="suggestion-content">
-                <div class="suggestion-title">AI 智能提示</div>
-                <div class="suggestion-text">{{ smartSuggestion }}</div>
-              </div>
-              <button class="suggestion-close" @click="smartSuggestion = ''">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-              </button>
-            </div>
-          </transition>
-
-      <el-form label-position="top" class="config-form">
-        <!-- API Token with smart hint -->
-        <div class="form-group" data-animate="1">
-          <el-form-item label="ANTHROPIC_API_KEY">
-            <el-input
-              v-model="tokenValue"
-              type="password"
-              placeholder="sk-ant-..."
-              show-password
-              @focus="handleTokenFocus"
-              @input="handleTokenInput"
-            />
-          </el-form-item>
-          <transition name="fade">
-            <div v-if="tokenHint" class="input-hint">
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-                <path d="M12 16V12M12 8H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-              {{ tokenHint }}
-            </div>
-          </transition>
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Top Bar / Header -->
+      <header class="top-bar">
+        <div class="page-title">
+          <h2>{{ currentTabLabel }}</h2>
+          <p class="page-desc">{{ currentTabDesc }}</p>
         </div>
-
-        <!-- API URL -->
-        <div class="form-group" data-animate="2">
-          <el-form-item label="API URL">
-            <el-input
-              v-model="urlValue"
-              placeholder="https://api.anthropic.com"
-              @input="handleUrlInput"
-            />
-          </el-form-item>
-          <transition name="fade">
-            <div v-if="urlHint" class="input-hint success">
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              {{ urlHint }}
-            </div>
-          </transition>
+        <div class="top-actions">
+           <!-- Potential Space for User Profile or Settings -->
         </div>
+      </header>
 
-        <!-- Model Selection -->
-        <div class="form-group" data-animate="3">
-          <el-form-item label="Model">
-            <el-select v-model="modelValue" placeholder="选择或输入模型..." filterable allow-create default-first-option>
-              <el-option-group label="Claude 4.5 系列">
-                <el-option label="Claude Opus 4.5 (最强)" value="claude-opus-4-5-20251101" />
-                <el-option label="Claude Sonnet 4.5 (平衡)" value="claude-sonnet-4-5-20250929" />
-                <el-option label="Claude Haiku 4.5 (快速)" value="claude-haiku-4-5-20251001" />
-              </el-option-group>
-              <el-option-group label="Claude 4 系列">
-                <el-option label="Claude Opus 4" value="claude-opus-4-20250514" />
-                <el-option label="Claude Sonnet 4" value="claude-sonnet-4-20250514" />
-              </el-option-group>
-            </el-select>
-          </el-form-item>
-        </div>
+      <!-- Content Scroll Text -->
+      <div class="content-scroll">
+        <transition name="fade-slide" mode="out-in">
+           <!-- Claude Configuration Tab -->
+           <div v-if="activeTab === 'claude'" key="claude" class="view-container">
+             <div class="glass-card config-panel">
+                <div class="card-header">
+                  <h3>Claude Code 配置</h3>
+                  <p>管理您的 Anthropic API 密钥和核心设置</p>
+                </div>
+                
+                <el-form label-position="top" class="custom-form">
+                   <!-- API Token -->
+                   <el-form-item label="API 密钥 (ANTHROPIC_API_KEY)">
+                     <el-input
+                        v-model="tokenValue"
+                        type="password"
+                        placeholder="sk-ant-..."
+                        show-password
+                        class="custom-input"
+                     >
+                        <template #prefix>
+                          <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11.536 16.536a2 2 0 00-.732 1.732l-.758 4.258h-2.27l.758-4.258C8.536 18.27 8.536 18.27 8 16a6 6 0 012-14h2"></path></svg>
+                        </template>
+                     </el-input>
+                     <div class="form-hint">用于鉴权的 Anthropic API Key</div>
+                   </el-form-item>
 
-        <!-- Options -->
-        <div class="form-group" data-animate="4">
-          <el-form-item label="选项">
-            <div class="checkbox-group">
-              <el-checkbox v-model="telemetryValue">
-                <span class="checkbox-label">
-                  <svg class="checkbox-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2"/>
-                  </svg>
-                  禁用遥测数据收集
-                </span>
-              </el-checkbox>
-              <el-checkbox v-model="trafficValue">
-                <span class="checkbox-label">
-                  <svg class="checkbox-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M13 10V3L4 14H11V21L20 10H13Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                  </svg>
-                  禁用非必要网络请求
-                </span>
-              </el-checkbox>
-              <el-checkbox v-model="coAuthorValue">
-                <span class="checkbox-label">
-                  <svg class="checkbox-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M17 21V19C17 16.2386 14.7614 14 12 14H8C5.23858 14 3 16.2386 3 19V21M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" stroke="currentColor" stroke-width="2"/>
-                  </svg>
-                  提交时包含 Co-authored-by
-                </span>
-              </el-checkbox>
-            </div>
-          </el-form-item>
-        </div>
+                   <!-- API URL -->
+                   <el-form-item label="API 端点地址">
+                     <el-input
+                        v-model="urlValue"
+                        placeholder="https://api.anthropic.com"
+                        class="custom-input"
+                     >
+                       <template #prefix>
+                         <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path></svg>
+                       </template>
+                     </el-input>
+                   </el-form-item>
 
-        <!-- Action Buttons -->
-        <div class="form-group button-group" data-animate="5">
-          <el-button type="primary" size="large" @click="handleSave" :loading="saving">
-            <template #icon>
-              <svg v-if="!saving" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M17 3L5 12.5L9 15L15.5 9L21 3V21H17V3Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-              </svg>
-            </template>
-            {{ saving ? '保存中...' : '保存配置' }}
-          </el-button>
-          <el-button type="info" size="large" @click="handleOpenFolder">
-            <template #icon>
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M3 7V17C3 19.2091 4.79086 21 7 21H17C19.2091 21 21 19.2091 21 17V9C21 6.79086 19.2091 5 17 5H11C9.34315 5 8 6.34315 8 8V9" stroke="currentColor" stroke-width="2"/>
-                <path d="M3 7H13M3 7L6 4M3 7L6 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </template>
-            打开目录
-          </el-button>
-        </div>
+                   <!-- Model Selection -->
+                   <el-form-item label="默认模型">
+                     <el-select v-model="modelValue" placeholder="请选择模型" class="custom-select" filterable allow-create>
+                        <el-option-group label="Claude 4.5 系列">
+                          <el-option label="Claude Opus 4.5 (最强)" value="claude-opus-4-5-20251101" />
+                          <el-option label="Claude Sonnet 4.5 (平衡)" value="claude-sonnet-4-5-20250929" />
+                          <el-option label="Claude Haiku 4.5 (快速)" value="claude-haiku-4-5-20251001" />
+                        </el-option-group>
+                        <el-option-group label="Claude 4 系列">
+                          <el-option label="Claude Opus 4" value="claude-opus-4-20250514" />
+                          <el-option label="Claude Sonnet 4" value="claude-sonnet-4-20250514" />
+                        </el-option-group>
+                     </el-select>
+                   </el-form-item>
 
-        <!-- Status Message -->
-        <transition name="fade">
-          <div v-if="statusMessage" :class="['status', statusMessage.type]">
-            <svg v-if="statusMessage.type === 'success'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-              <path d="M8 12L11 15L16 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <svg v-else-if="statusMessage.type === 'error'" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-              <path d="M15 9L9 15M9 9L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-            <svg v-else viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-              <path d="M12 16V12M12 8H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-            {{ statusMessage.text }}
-          </div>
+                   <!-- Toggles -->
+                   <div class="toggles-group">
+                      <div class="toggle-item">
+                        <div class="toggle-info">
+                          <span class="toggle-label">禁用遥测</span>
+                          <span class="toggle-desc">阻止发送统计数据到服务器</span>
+                        </div>
+                        <el-switch v-model="telemetryValue" />
+                      </div>
+                      <div class="toggle-item">
+                        <div class="toggle-info">
+                          <span class="toggle-label">节省流量模式</span>
+                          <span class="toggle-desc">禁用非必要的网络请求</span>
+                        </div>
+                        <el-switch v-model="trafficValue" />
+                      </div>
+                      <div class="toggle-item">
+                        <div class="toggle-info">
+                          <span class="toggle-label">Git 共创署名</span>
+                          <span class="toggle-desc">提交包含 Co-authored-by</span>
+                        </div>
+                        <el-switch v-model="coAuthorValue" />
+                      </div>
+                   </div>
+
+                   <!-- Actions -->
+                   <div class="form-actions">
+                      <el-button type="primary" size="large" @click="handleSave" :loading="saving" class="save-btn">
+                        {{ saving ? '正在保存...' : '保存配置' }}
+                      </el-button>
+                      <el-button type="default" size="large" @click="handleOpenFolder" class="secondary-btn">
+                        打开配置目录
+                      </el-button>
+                   </div>
+                </el-form>
+             </div>
+             
+             <!-- Presets Area could go here... -->
+           </div>
+
+           <!-- Codex Tab -->
+           <div v-else-if="activeTab === 'codex'" key="codex" class="view-container">
+             <CodexConfigView />
+           </div>
+
+           <!-- Skills Tab -->
+           <div v-else-if="activeTab === 'skills'" key="skills" class="view-container">
+             <SkillsView />
+           </div>
+           
+           <!-- Installer Tab -->
+           <div v-else-if="activeTab === 'installer'" key="installer" class="view-container">
+             <OneClickInstaller />
+           </div>
+
+           <!-- EnvVars Tab -->
+           <div v-else-if="activeTab === 'envvar'" key="envvar" class="view-container">
+             <EnvVarView />
+           </div>
         </transition>
-      </el-form>
-
-      <!-- Presets Section -->
-      <div class="presets-section" data-animate="6">
-        <el-divider>
-          <svg class="divider-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M19 21V12M12 21V8M5 21V4" stroke="url(#gradient2)" stroke-width="2" stroke-linecap="round"/>
-            <defs>
-              <linearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#667eea"/>
-                <stop offset="100%" stop-color="#764ba2"/>
-              </linearGradient>
-            </defs>
-          </svg>
-          配置预设
-        </el-divider>
-
-        <el-form label-position="top" class="config-form">
-          <div class="preset-actions">
-            <el-select v-model="selectedPreset" placeholder="选择预设..." style="width: 220px" filterable>
-              <el-option
-                v-for="name in presetNames"
-                :key="name"
-                :label="name"
-                :value="name"
-              />
-            </el-select>
-            <el-button type="primary" :disabled="!selectedPreset" @click="handleApplyPreset">
-              <template #icon>
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M5 13L9 17L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </template>
-              应用
-            </el-button>
-            <el-button type="danger" :disabled="!selectedPreset" @click="handleDeletePreset">
-              <template #icon>
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M3 6H5H21M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" stroke-width="2"/>
-                </svg>
-              </template>
-              删除
-            </el-button>
-          </div>
-
-          <div class="preset-save">
-            <el-input v-model="newPresetName" placeholder="输入预设名称..." style="width: 220px" />
-            <el-button type="success" :disabled="!newPresetName" @click="handleSavePreset">
-              <template #icon>
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H16L21 8V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21Z" stroke="currentColor" stroke-width="2"/>
-                  <path d="M17 21V13H7V21M17 21H7" stroke="currentColor" stroke-width="2"/>
-                </svg>
-              </template>
-              保存为预设
-            </el-button>
-          </div>
-        </el-form>
       </div>
-        </div>
+    </main>
 
-        <!-- Codex Configuration Tab -->
-        <div v-else-if="activeTab === 'codex'" key="codex" class="tab-content">
-          <CodexConfigView />
-        </div>
-
-        <!-- Skills Management Tab -->
-        <div v-else-if="activeTab === 'skills'" key="skills" class="tab-content">
-          <SkillsView />
-        </div>
-
-        <!-- One-Click Installer Tab -->
-        <div v-else-if="activeTab === 'installer'" key="installer" class="tab-content installer-tab">
-          <OneClickInstaller />
-        </div>
-
-        <!-- Environment Variables Tab -->
-        <div v-else key="envvar" class="tab-content envvar-tab">
-          <EnvVarView />
-        </div>
-      </transition>
-    </div>
+    <!-- Global Toast/Notification Container (if needed, but Element Plus uses its own) -->
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useConfigStore } from '@/stores/config.store'
 import { useCodexStore } from '@/stores/codex.store'
@@ -338,14 +183,52 @@ import logoUrl from '@/assets/logo.svg?url'
 const configStore = useConfigStore()
 const codexStore = useCodexStore()
 
-const activeTab = ref<'claude' | 'codex' | 'skills' | 'installer' | 'envvar'>('claude')
+// Tabs Configuration
+const activeTab = ref('claude')
+const tabs = [
+  { 
+    id: 'claude', 
+    label: '基础配置', 
+    desc: '配置 Claude Code 的核心参数与模型',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7L12 12L22 7L12 2Z" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 17L12 22L22 17" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 12L12 17L22 12" stroke-linecap="round" stroke-linejoin="round"/></svg>' 
+  },
+  { 
+    id: 'codex', 
+    label: 'OpenAI/Codex', 
+    desc: '配置 OpenAI 兼容的 API 设置',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8C21 6.89543 20.1046 6 19 6H5C3.89543 6 3 6.89543 3 8V16C3 17.1046 3.89543 18 5 18H19C20.1046 18 21 17.1046 21 16Z"/><path d="M10 9H14M10 12H12M10 15H11"/></svg>'
+  },
+  { 
+    id: 'skills', 
+    label: '技能库管理', 
+    desc: '管理和同步您的 AI 助手技能',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>'
+  },
+  { 
+    id: 'installer', 
+    label: '一键部署', 
+    desc: '快速安装必要的开发环境与工具',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>'
+  },
+  { 
+    id: 'envvar', 
+    label: '环境变量', 
+    desc: '系统级环境变量的可视化编辑器',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 17l6-6-6-6"/><path d="M12 19h8"/></svg>'
+  }
+]
 
-const configPath = computed(() => configStore.configPath)
-const statusMessage = computed(() => configStore.statusMessage)
-const MODELS = configStore.MODELS
-const presetNames = computed(() => configStore.presetNames)
+const currentTabLabel = computed(() => {
+  return tabs.find(t => t.id === activeTab.value)?.label || '未知页面'
+})
+const currentTabDesc = computed(() => {
+  return tabs.find(t => t.id === activeTab.value)?.desc || ''
+})
+
 const loading = computed(() => configStore.loading)
+const saving = ref(false)
 
+// Form Models
 const tokenValue = ref('')
 const urlValue = ref('')
 const modelValue = ref('')
@@ -353,94 +236,22 @@ const telemetryValue = ref(true)
 const trafficValue = ref(true)
 const coAuthorValue = ref(false)
 
-const selectedPreset = ref('')
-const newPresetName = ref('')
-const saving = ref(false)
-const isActive = ref(true)
-const smartSuggestion = ref('')
-const tokenHint = ref('')
-const urlHint = ref('')
-
 onMounted(async () => {
+  await loadAllConfig()
+})
+
+async function loadAllConfig() {
   await configStore.loadConfig()
-  await configStore.loadPresets()
   await configStore.loadConfigPath()
-
-  await codexStore.loadConfig()
-  await codexStore.loadAuth()
-  await codexStore.loadPresets()
-  await codexStore.loadPaths()
-  await codexStore.loadConfigRaw()
-
+  await codexStore.loadConfig() // Preload others
+  
+  // Sync local state
   tokenValue.value = configStore.token
   urlValue.value = configStore.baseUrl
   modelValue.value = configStore.config.model
   telemetryValue.value = configStore.disableTelemetry
   trafficValue.value = configStore.disableTraffic
   coAuthorValue.value = configStore.config.includeCoAuthoredBy
-
-  // Show initial smart suggestion
-  setTimeout(() => {
-    if (!tokenValue.value) {
-      smartSuggestion.value = '建议先配置 API Token 以使用 Claude Code'
-    }
-  }, 1000)
-
-  // Animate elements on load
-  animateElements()
-})
-
-watch(statusMessage, () => {
-  if (statusMessage.value) {
-    setTimeout(() => {
-      configStore.clearStatus()
-    }, 3000)
-  }
-})
-
-function animateElements(root: ParentNode = document) {
-  const elements = root.querySelectorAll('[data-animate]')
-  elements.forEach((el, index) => {
-    setTimeout(() => {
-      el.classList.add('animate-in')
-    }, index * 100)
-  })
-}
-
-function handleTabEnter(el: Element) {
-  // Wait one frame so the entering tab's DOM is present, then trigger animations.
-  requestAnimationFrame(() => animateElements(el))
-}
-
-// Smart hints for token
-function handleTokenFocus() {
-  if (!tokenValue.value) {
-    tokenHint.value = '从 https://console.anthropic.com 获取 API Token'
-  } else {
-    tokenHint.value = ''
-  }
-}
-
-function handleTokenInput(value: string) {
-  if (value.length > 0 && value.length < 10) {
-    tokenHint.value = 'Token 格式似乎不正确，应该以 sk-ant- 开头'
-  } else if (value.startsWith('sk-ant-')) {
-    tokenHint.value = ''
-    smartSuggestion.value = 'Token 格式正确！现在可以配置其他选项了'
-  } else {
-    tokenHint.value = ''
-  }
-}
-
-// Smart hints for URL
-function handleUrlInput(value: string) {
-  if (value.includes('anthropic.com')) {
-    urlHint.value = '官方 API 端点'
-  } else if (value.includes('newcli') || value.includes('glm')) {
-    urlHint.value = '第三方 API 端点'
-  } else {
-    urlHint.value = ''
-  }
 }
 
 async function handleSave() {
@@ -452,12 +263,13 @@ async function handleSave() {
   configStore.toggleTraffic(trafficValue.value)
   configStore.toggleCoAuthor(coAuthorValue.value)
 
-  await configStore.saveConfig()
+  const success = await configStore.saveConfig()
   saving.value = false
-
-  // Show success suggestion
-  if (statusMessage.value?.type === 'success') {
-    smartSuggestion.value = '配置已保存！现在可以保存为预设以便快速切换'
+  
+  if (success) {
+    ElMessage.success('配置已成功保存')
+  } else {
+    ElMessage.error('保存失败，请检查日志')
   }
 }
 
@@ -465,608 +277,335 @@ async function handleOpenFolder() {
   await configStore.openFolder()
 }
 
-async function handleApplyPreset() {
-  if (!selectedPreset.value) {
-    ElMessage.error('请选择预设')
-    return
-  }
-
-  const success = await configStore.applyPreset(selectedPreset.value)
-  if (success) {
-    ElMessage.success(`已应用预设 "${selectedPreset.value}"`)
-    tokenValue.value = configStore.token
-    urlValue.value = configStore.baseUrl
-    modelValue.value = configStore.config.model
-    telemetryValue.value = configStore.disableTelemetry
-    trafficValue.value = configStore.disableTraffic
-    coAuthorValue.value = configStore.config.includeCoAuthoredBy
-    selectedPreset.value = ''
-    smartSuggestion.value = `预设 "${selectedPreset.value}" 已应用`
-  }
-}
-
-async function handleDeletePreset() {
-  if (!selectedPreset.value) {
-    ElMessage.error('请选择预设')
-    return
-  }
-
-  const success = await configStore.deletePreset(selectedPreset.value)
-  if (success) {
-    ElMessage.success(`已删除预设 "${selectedPreset.value}"`)
-    selectedPreset.value = ''
-  }
-}
-
-async function handleSavePreset() {
-  if (!newPresetName.value) {
-    ElMessage.error('请输入预设名称')
-    return
-  }
-
-  configStore.updateToken(tokenValue.value)
-  configStore.updateBaseUrl(urlValue.value)
-  configStore.updateModel(modelValue.value)
-  configStore.toggleTelemetry(telemetryValue.value)
-  configStore.toggleTraffic(trafficValue.value)
-  configStore.toggleCoAuthor(coAuthorValue.value)
-
-  const success = await configStore.savePreset(newPresetName.value)
-  if (success) {
-    ElMessage.success(`预设 "${newPresetName.value}" 已保存`)
-    newPresetName.value = ''
-    smartSuggestion.value = `预设 "${newPresetName.value}" 已保存，可以随时快速应用`
-  }
-}
 </script>
 
-<style scoped>
+<style>
+/* Global Variables & Reset */
+:root {
+  --bg-dark: #0f1115;
+  --bg-sidebar: #161b22;
+  --bg-card: rgba(30, 35, 45, 0.6);
+  --accent-primary: #646cff;
+  --accent-hover: #7d84ff;
+  --text-primary: #e6edf3;
+  --text-secondary: #8b949e;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --sidebar-width: 260px;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', 'Microsoft YaHei', 'PingFang SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+  overflow: hidden; /* App container handles scroll */
+}
+
+/* App Container */
 .app-container {
-  width: 100%;
+  display: flex;
   height: 100vh;
-  background-color: var(--bg-primary);
+  width: 100vw;
+  overflow: hidden;
+  background: radial-gradient(circle at top right, #1f2430 0%, #0f1115 100%);
+}
+
+/* Sidebar */
+.sidebar {
+  width: var(--sidebar-width);
+  background-color: var(--bg-sidebar);
+  border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
-  position: relative;
+  flex-shrink: 0;
+  padding: 24px;
+  box-sizing: border-box;
 }
 
-/* AI Header */
-.ai-header {
+.sidebar-header {
+  margin-bottom: 32px;
   display: flex;
   align-items: center;
-  gap: 20px;
-  padding: 30px 40px;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
-  border-bottom: 1px solid var(--border-color);
-  backdrop-filter: blur(10px);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  transition: all 0.3s ease;
+  gap: 12px;
 }
 
-.ai-header.glow-effect {
-  box-shadow: 0 4px 30px rgba(99, 102, 241, 0.1);
-}
-
-.ai-avatar-container {
-  position: relative;
-}
-
-.ai-avatar {
-  width: 60px;
-  height: 60px;
-  border-radius: 16px;
-  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 50%, #f1f5f9 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: var(--shadow-lg), 0 0 0 1px rgba(99, 102, 241, 0.1);
-  /* animation: float 3s ease-in-out infinite; */
-  position: relative;
-  overflow: hidden;
-}
-
-.ai-avatar::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
-  border-radius: 16px;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.ai-avatar:hover::before {
-  opacity: 1;
-}
-
-.ai-icon {
-  width: 32px;
-  height: 32px;
-  position: relative;
-  z-index: 1;
-}
-
-.ai-pulse {
-  position: absolute;
-  inset: -4px;
-  border-radius: 20px;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
-  opacity: 0.3;
-  animation: pulse 2s ease-in-out infinite;
-  z-index: -1;
-}
-
-.ai-status {
-  position: absolute;
-  bottom: 2px;
-  right: 2px;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: #ef4444;
-  border: 2px solid var(--bg-card);
-  transition: all 0.3s ease;
-}
-
-.ai-status.online {
-  background: #10b981;
-  box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
-}
-
-.header-text {
-  flex: 1;
-}
-
-.title {
-  font-size: 28px;
-  font-weight: 700;
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin: 0;
-  letter-spacing: -0.5px;
-}
-
-.subtitle {
-  font-size: 13px;
-  color: var(--text-dim);
-  margin: 4px 0 0 0;
-  font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
-}
-
-/* Content */
-.content {
-  flex: 1;
-  max-width: 640px;
-  width: 100%;
-  margin: 0 auto;
-  padding: 30px 40px;
-}
-
-/* Smart Suggestion Banner */
-.smart-suggestion {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 16px 20px;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
-  border: 1px solid rgba(99, 102, 241, 0.2);
-  border-radius: 16px;
-  margin-bottom: 24px;
-  box-shadow: var(--shadow-md);
-  position: relative;
-  overflow: hidden;
-}
-
-.smart-suggestion::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-  animation: shimmer 3s infinite;
-}
-
-.suggestion-icon {
+.logo-container {
   width: 40px;
   height: 40px;
-  min-width: 40px;
-  border-radius: 12px;
-  background: var(--gradient-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.suggestion-icon svg {
-  width: 20px;
-  height: 20px;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-}
-
-.suggestion-content {
-  flex: 1;
-}
-
-.suggestion-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-primary);
-  margin-bottom: 2px;
-}
-
-.suggestion-text {
-  font-size: 13px;
-  color: var(--text-dim);
-  line-height: 1.4;
-}
-
-.suggestion-close {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  border: none;
-  background: transparent;
-  color: var(--text-dim);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-
-.suggestion-close:hover {
-  background: rgba(99, 102, 241, 0.1);
-  color: var(--color-primary);
-}
-
-.suggestion-close svg {
-  width: 16px;
-  height: 16px;
-}
-
-/* Form Groups */
-.form-group {
-  margin-bottom: 24px;
-  opacity: 0;
-  transform: translateY(20px);
-  transition: all 0.5s ease;
-}
-
-.form-group.animate-in {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* Input Hints */
-.input-hint {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 8px;
-  padding: 10px 14px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
+  background: linear-gradient(135deg, #646cff 0%, #a259ff 100%);
   border-radius: 10px;
-  font-size: 12px;
-  color: var(--text-dim);
-}
-
-.input-hint svg {
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
-}
-
-.input-hint.success {
-  border-color: var(--color-green);
-  color: var(--color-green);
-  background: rgba(16, 185, 129, 0.05);
-}
-
-/* Checkbox Group */
-.checkbox-group {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-:deep(.el-checkbox) {
-  margin: 0 !important;
-}
-
-.checkbox-label {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 14px;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(100, 108, 255, 0.3);
 }
 
-.checkbox-icon {
-  width: 16px;
-  height: 16px;
-  opacity: 0.5;
-}
-
-:deep(.el-checkbox:hover .checkbox-icon) {
-  opacity: 1;
-}
-
-/* Config Form */
-.config-form {
-  background: var(--bg-card);
-  border-radius: 20px;
-  padding: 24px;
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--border-color);
-  transition: all 0.3s ease;
-}
-
-.config-form:hover {
-  box-shadow: var(--shadow-lg);
-}
-
-/* Button Group */
-.button-group {
-  display: flex;
-  gap: 12px;
-}
-
-:deep(.el-button--large) {
-  height: 48px;
-  font-size: 15px;
-  flex: 1;
-}
-
-:deep(.el-button__icon) {
-  margin-right: 8px;
-}
-
-:deep(.el-button) svg {
-  width: 18px;
-  height: 18px;
-}
-
-/* Status Message */
-.status {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 20px;
-  padding: 14px 18px;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 500;
-  animation: fadeIn 0.3s ease;
-}
-
-.status svg {
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-}
-
-.status.success {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.15) 100%);
-  color: var(--color-green);
-  border: 1px solid rgba(16, 185, 129, 0.3);
-}
-
-.status.error {
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.15) 100%);
-  color: var(--color-red);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-}
-
-.status.info {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
-  color: var(--color-primary);
-  border: 1px solid rgba(99, 102, 241, 0.3);
-}
-.el-divider--horizontal{
-  border-top: none;
-}
-/* Presets Section */
-.presets-section {
-  margin-top: 20px;
-  padding-top: 10px;
-  opacity: 0;
-  transform: translateY(20px);
-  transition: all 0.5s ease;
-  margin-bottom: 20px;
-}
-
-.presets-section.animate-in {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-:deep(.el-divider) {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin: 32px 0 28px 0;
-}
-
-:deep(.el-divider__text) {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 18px;
-  font-weight: 700;
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  letter-spacing: -0.3px;
-}
-
-.divider-icon {
+.app-logo {
   width: 24px;
   height: 24px;
 }
 
-.preset-actions {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  margin-bottom: 20px;
-  padding: 20px;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%);
-  border-radius: 16px;
-  border: 1px solid rgba(99, 102, 241, 0.15);
+.app-title h1 {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.2;
+  background: linear-gradient(90deg, #fff, #babbcc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-.preset-save {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  padding: 20px;
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.06) 0%, rgba(5, 150, 105, 0.06) 100%);
-  border-radius: 16px;
-  border: 1px solid rgba(16, 185, 129, 0.15);
+.version-tag {
+  font-size: 11px;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 2px 6px;
+  border-radius: 4px;
 }
 
-/* Preset Select/Input Styling */
-:deep(.preset-actions .el-select),
-:deep(.preset-save .el-input) {
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   flex: 1;
 }
 
-:deep(.preset-actions .el-select__wrapper),
-:deep(.preset-save .el-input__wrapper) {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(99, 102, 241, 0.2);
-  border-radius: 12px;
-  box-shadow: none;
-  transition: all 0.3s ease;
-  height: 44px;
-}
-
-:deep(.preset-actions .el-select__wrapper:hover),
-:deep(.preset-save .el-input__wrapper:hover) {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(99, 102, 241, 0.4);
-}
-
-:deep(.preset-actions .el-select__wrapper.is-focused),
-:deep(.preset-save .el-input__wrapper.is-focused) {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-}
-
-:deep(.preset-actions .el-button),
-:deep(.preset-save .el-button) {
-  height: 44px;
-  padding: 0 24px;
-  border-radius: 12px;
-  font-weight: 600;
-  font-size: 14px;
-}
-
-/* Form Item Overrides */
-:deep(.el-form-item) {
-  margin-bottom: 0;
-}
-
-:deep(.el-form-item__label) {
-  color: var(--text-dim);
-  font-size: 13px;
-  font-weight: 600;
-  padding: 0;
-  margin-bottom: 8px;
-  letter-spacing: 0.3px;
-}
-
-/* Transitions */
-.slide-fade-enter-active {
-  transition: all 0.4s ease;
-}
-
-.slide-fade-leave-active {
-  transition: all 0.3s ease;
-}
-
-.slide-fade-enter-from {
-  opacity: 0;
-  transform: translateY(-10px);
-}
-
-.slide-fade-leave-to {
-  opacity: 0;
-  transform: translateY(-10px);
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: all 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-  transform: translateY(-10px);
-}
-
-/* Tab Switcher */
-.tab-switcher {
+.nav-item {
   display: flex;
-  gap: 8px;
-  padding: 0 40px;
-  margin-bottom: 20px;
-  background: rgba(0, 0, 0, 0.2);
-  border-bottom: 1px solid var(--border-color);
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  text-align: left;
+  font-size: 14px;
+  font-weight: 500;
 }
 
-.tab-btn {
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+}
+
+.nav-item.active {
+  background: rgba(100, 108, 255, 0.1);
+  color: var(--accent-primary);
+}
+
+.nav-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.active-indicator {
+  position: absolute;
+  right: 12px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  box-shadow: 0 0 8px var(--accent-primary);
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color);
+}
+
+.status-indicator {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 20px;
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  color: var(--text-dim);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f85149;
+}
+
+.status-indicator.online .status-dot {
+  background: #3fb950;
+  box-shadow: 0 0 8px rgba(63, 185, 80, 0.4);
+}
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.top-bar {
+  padding: 30px 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-shrink: 0;
+}
+
+.page-title h2 {
+  font-size: 24px;
+  margin: 0 0 8px 0;
+  font-weight: 600;
+}
+
+.page-desc {
+  color: var(--text-secondary);
   font-size: 14px;
+  margin: 0;
+}
+
+.content-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 40px 40px 40px;
+}
+
+.view-container {
+  max-width: 900px;
+  margin: 0 auto;
+  animation: slideUp 0.4s ease-out;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Glass Card & Forms */
+.glass-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 32px;
+}
+
+.card-header {
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 16px;
+}
+
+.card-header h3 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+}
+
+.card-header p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+/* Element Plus Overrides for Dark Theme */
+.el-form-item__label {
+  color: var(--text-secondary) !important;
   font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
 }
 
-.tab-btn:hover {
-  color: var(--text-normal);
-  background: rgba(255, 255, 255, 0.05);
+:deep(.el-input__wrapper), :deep(.el-select__wrapper) {
+  background-color: rgba(0, 0, 0, 0.2) !important;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.1) inset !important;
+  color: white !important;
 }
 
-.tab-btn.active {
-  color: var(--color-primary);
-  border-bottom-color: var(--color-primary);
+:deep(.el-input__wrapper.is-focus) {
+  box-shadow: 0 0 0 1px var(--accent-primary) inset !important;
 }
 
-.tab-btn svg {
-  width: 18px;
-  height: 18px;
+:deep(.el-input__inner) {
+  color: var(--text-primary) !important;
 }
 
-.tab-content {
-  width: 100%;
+.form-hint {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 6px;
 }
 
-.installer-tab {
-  max-width: none;
-  padding: 0;
+.toggles-group {
+  margin-top: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: rgba(0,0,0,0.2);
+  padding: 20px;
+  border-radius: 12px;
 }
 
-.envvar-tab {
-  max-width: none;
-  padding: 0;
+.toggle-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.toggle-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.toggle-label {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.toggle-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.form-actions {
+  margin-top: 40px;
+  display: flex;
+  gap: 16px;
+}
+
+.save-btn {
+  background: linear-gradient(135deg, #646cff 0%, #8f44fd 100%) !important;
+  border: none !important;
+  flex: 1;
+}
+
+.secondary-btn {
+  background: rgba(255,255,255,0.05) !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Fade Transition for Tabs */
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: all 0.3s ease;
+}
+
+.fade-slide-enter-from {
+  opacity: 0;
+  transform: translateX(10px);
+}
+
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateX(-10px);
 }
 </style>

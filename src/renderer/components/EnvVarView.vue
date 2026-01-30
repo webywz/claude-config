@@ -11,8 +11,8 @@
         </svg>
       </div>
       <div class="header-text">
-        <h2>Windows 系统环境变量</h2>
-        <p>管理用户级和系统级环境变量及 Path 配置</p>
+        <h2>系统环境变量</h2>
+        <p>Windows 环境变量与 Path 配置管理</p>
       </div>
     </div>
 
@@ -29,20 +29,20 @@ import EnvVarEditor from './EnvVarEditor.vue'
 
 <style scoped>
 .envvar-container {
-  padding: 24px;
-  max-width: 1000px;
-  margin: 0 auto;
+  width: 100%;
+  padding: 10px;
 }
 
 .envvar-header {
   display: flex;
   gap: 20px;
   align-items: center;
-  margin-bottom: 32px;
+  margin-bottom: 24px;
   padding: 24px;
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
   border-radius: 16px;
-  border: 1px solid var(--border-color, #30363d);
+  border: 1px solid var(--border-color);
+  backdrop-filter: blur(10px);
 }
 
 .header-icon {
@@ -53,8 +53,9 @@ import EnvVarEditor from './EnvVarEditor.vue'
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #8b5cf6;
+  color: #fff;
   flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(100, 108, 255, 0.3);
 }
 
 .header-icon svg {
@@ -66,13 +67,13 @@ import EnvVarEditor from './EnvVarEditor.vue'
   margin: 0 0 4px 0;
   font-size: 22px;
   font-weight: 600;
-  color: var(--text-primary, #f0f6fc);
+  color: var(--text-primary);
 }
 
 .header-text p {
   margin: 0;
   font-size: 14px;
-  color: var(--text-secondary, #8b949e);
+  color: var(--text-secondary);
 }
 
 .path-section {

@@ -12,7 +12,7 @@
             </linearGradient>
           </defs>
         </svg>
-        <h3 class="header-title">Windows Path 环境变量</h3>
+        <h3 class="header-title">Windows Path 列表</h3>
       </div>
       <div class="header-actions">
         <el-select v-model="filterType" placeholder="筛选" size="small" style="width: 100px">
@@ -24,25 +24,25 @@
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           </svg>
-          添加
+          添加路径
         </button>
       </div>
     </div>
 
     <!-- Add path dialog -->
-    <el-dialog v-model="showAddDialog" title="添加路径" width="500px">
+    <el-dialog v-model="showAddDialog" title="添加新路径" width="500px" class="glass-dialog">
       <el-form label-position="top">
-        <el-form-item label="路径">
+        <el-form-item label="路径 (Path)">
           <el-input
             v-model="newPathInput"
-            placeholder="输入路径，如: C:\Program Files\MyApp"
+            placeholder="例如: C:\Program Files\Python39"
             @keyup.enter="addPath"
           />
         </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="showAddDialog = false">取消</el-button>
-        <el-button type="primary" @click="addPath">添加</el-button>
+        <el-button type="primary" @click="addPath">确认添加</el-button>
       </template>
     </el-dialog>
 
@@ -50,7 +50,7 @@
       <transition-group name="list">
         <div
           v-for="(pathItem, index) in filteredPaths"
-          :key="`${pathItem.value}-${pathItem.type}`"
+          :key="`${pathItem.value}-${pathItem.type}-${index}`"
           class="path-item"
           :class="{ 'is-system': pathItem.type === 'system' }"
         >
@@ -65,7 +65,7 @@
                 type="button"
                 class="action-btn move-up"
                 @click="movePath(getUserIndex(index), -1)"
-                title="上移"
+                title="向上移动"
               >
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M12 19V5M5 12L12 5L19 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -76,7 +76,7 @@
                 type="button"
                 class="action-btn move-down"
                 @click="movePath(getUserIndex(index), 1)"
-                title="下移"
+                title="向下移动"
               >
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M12 5V19M19 12L12 19L5 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -87,7 +87,7 @@
                 type="button"
                 class="action-btn delete"
                 @click="deletePath(pathItem.value)"
-                title="删除"
+                title="删除此路径"
               >
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M3 6H5H21M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -97,7 +97,7 @@
                 v-else
                 type="button"
                 class="action-btn readonly"
-                title="系统路径只读"
+                title="系统变量不可修改"
               >
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M12 15L8 11H11V4H13V11H16L12 15ZM4 20H20V18H4V20Z" fill="currentColor"/>
@@ -113,7 +113,7 @@
           <path d="M4 4H20C21.1046 4 22 4.89543 22 6V18C22 19.1046 21.1046 20 20 20H4C2.89543 20 2 19.1046 2 18V6C2 4.89543 2.89543 4 4 4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           <path d="M7 8H13M7 12H11M7 16H10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
-        <p>暂无路径</p>
+        <p>暂无符合条件的路径</p>
       </div>
     </div>
 
@@ -151,7 +151,7 @@ function getUserIndex(overallIndex: number): number {
   // Get the index within user paths only
   const userPaths = paths.value.filter(p => p.type === 'user')
   const item = filteredPaths.value[overallIndex]
-  if (item.type !== 'user') return -1
+  if (!item || item.type !== 'user') return -1
   return userPaths.findIndex(p => p.value === item.value)
 }
 
@@ -161,7 +161,7 @@ async function loadPaths() {
     paths.value = await window.electronAPI.system.getPaths()
   } catch (error) {
     console.error('Failed to load paths:', error)
-    showSystemMessage('加载路径失败', 'error')
+    showSystemMessage('加载路径失败，请检查权限', 'error')
   } finally {
     loading.value = false
   }
@@ -184,13 +184,13 @@ async function addPath() {
   try {
     const success = await window.electronAPI.system.addPath(pathValue)
     if (success) {
-      showSystemMessage('路径已添加', 'success')
+      showSystemMessage('路径已成功添加', 'success')
       // Add to local state
       paths.value.push({ value: pathValue, type: 'user' })
       showAddDialog.value = false
       newPathInput.value = ''
     } else {
-      showSystemMessage('添加失败，路径可能已存在', 'error')
+      showSystemMessage('添加失败，可能是路径已存在或权限不足', 'error')
     }
   } catch (error) {
     showSystemMessage('添加失败: ' + (error instanceof Error ? error.message : '未知错误'), 'error')
@@ -199,7 +199,7 @@ async function addPath() {
 
 async function deletePath(pathValue: string) {
   try {
-    await ElMessageBox.confirm(`确定要删除路径 "${pathValue}" 吗？`, '确认删除', {
+    await ElMessageBox.confirm(`确定要删除路径 "${pathValue}" 吗？此操作无法撤销。`, '确认删除', {
       confirmButtonText: '删除',
       cancelButtonText: '取消',
       type: 'warning'
@@ -228,7 +228,7 @@ async function movePath(userIndex: number, direction: number) {
   try {
     const success = await window.electronAPI.system.movePath(userIndex, toIndex)
     if (success) {
-      showSystemMessage('路径顺序已更新', 'success')
+      showSystemMessage('路径优先级已更新', 'success')
       await loadPaths() // Reload to get correct order
     } else {
       showSystemMessage('移动失败', 'error')
@@ -253,7 +253,7 @@ onMounted(() => {
 <style scoped>
 .path-editor {
   background: var(--bg-card);
-  border-radius: 20px;
+  border-radius: 16px;
   padding: 24px;
   box-shadow: var(--shadow-md);
   border: 1px solid var(--border-color);
@@ -287,16 +287,13 @@ onMounted(() => {
   font-size: 16px;
   font-weight: 600;
   margin: 0;
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--text-primary);
 }
 
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   flex-shrink: 0;
 }
 
@@ -304,11 +301,11 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
+  padding: 8px 16px;
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
   border: 1px solid rgba(99, 102, 241, 0.3);
   border-radius: 8px;
-  color: var(--color-primary);
+  color: var(--accent-primary);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -330,7 +327,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: 400px;
+  max-height: 480px;
   overflow-y: auto;
 }
 
@@ -338,32 +335,32 @@ onMounted(() => {
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid var(--border-color);
   border-radius: 10px;
-  /* overflow: hidden; */
   transition: all 0.2s ease;
 }
 
 .path-item:hover {
   background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(99, 102, 241, 0.3);
+  border-color: var(--accent-primary);
 }
 
 .path-item.is-system {
-  background: rgba(107, 114, 128, 0.05);
+  background: rgba(0, 0, 0, 0.2);
+  opacity: 0.8;
 }
 
 .path-display {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 14px;
-  gap: 8px;
+  padding: 12px 16px;
+  gap: 12px;
 }
 
 .path-info {
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   min-width: 0;
 }
 
@@ -379,20 +376,20 @@ onMounted(() => {
 
 .path-type.user {
   background: rgba(16, 185, 129, 0.15);
-  color: var(--color-green);
+  color: #10b981;
   border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
 .path-type.system {
   background: rgba(107, 114, 128, 0.15);
-  color: var(--text-dim);
+  color: var(--text-secondary);
   border: 1px solid rgba(107, 114, 128, 0.3);
 }
 
 .path-value {
   font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
   font-size: 12px;
-  color: var(--text-normal);
+  color: var(--text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -411,7 +408,7 @@ onMounted(() => {
   border-radius: 6px;
   border: none;
   background: transparent;
-  color: var(--text-dim);
+  color: var(--text-secondary);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -428,17 +425,17 @@ onMounted(() => {
 .action-btn.move-up:hover,
 .action-btn.move-down:hover {
   background: rgba(99, 102, 241, 0.1);
-  color: var(--color-primary);
+  color: var(--accent-primary);
 }
 
 .action-btn.delete:hover {
   background: rgba(239, 68, 68, 0.1);
-  color: var(--color-red);
+  color: #ef4444;
 }
 
 .action-btn.readonly {
   cursor: not-allowed;
-  opacity: 0.5;
+  opacity: 0.3;
 }
 
 .empty-state {
@@ -447,7 +444,7 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   padding: 40px 20px;
-  color: var(--text-dim);
+  color: var(--text-secondary);
 }
 
 .empty-state svg {
@@ -473,19 +470,19 @@ onMounted(() => {
 
 .system-message.success {
   background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.15) 100%);
-  color: var(--color-green);
+  color: #10b981;
   border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
 .system-message.error {
   background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.15) 100%);
-  color: var(--color-red);
+  color: #ef4444;
   border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 .system-message.info {
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
-  color: var(--color-primary);
+  color: var(--accent-primary);
   border: 1px solid rgba(99, 102, 241, 0.3);
 }
 

@@ -3,11 +3,11 @@
     <!-- Header Actions -->
     <div class="actions-header" data-animate="1">
       <div class="header-left">
-        <h2>Skills Management</h2>
+        <h2>技能库管理</h2>
         <p class="subtitle">同步各个 AI 工具的 Skills 配置</p>
       </div>
       <div class="header-right">
-        <el-button color="#626aef" :dark="true" @click="handleImportClick">
+        <el-button color="#646cff" :dark="true" @click="handleImportClick">
           <template #icon>
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M12 16L12 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -16,7 +16,7 @@
               <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
             </svg>
           </template>
-          导入 Skill (Zip/文件夹)
+          导入技能 (Zip/文件夹)
         </el-button>
         <el-button type="primary" :loading="syncing" @click="handleSyncAll" class="sync-btn">
           <template #icon>
@@ -47,14 +47,6 @@
       multiple
       accept=".zip"
     />
-    <!-- Note: Directory upload is tricky with standard input, treating simplified drag/drop or just file selection for now. 
-         Electron best practice suggests main process dialog, but input[type=file] is simpler for MVP.
-         Actually, let's use the electronAPI to open dialog if possible, but we don't have openDialog in API yet.
-         Wait, we can't easily add 'webkitdirectory' programmatically to the same input as files. 
-         Let's stick to standard file input allowing multiple files for now, or just impl a drag-drop zone. -->
-
-    <!-- Drag n Drop Zone (Overlay) if dragging? Or just a dedicated area? 
-         Let's keep it simple: "Import" button triggers file selection (Zip or Files). -->
 
     <!-- Provider Paths Info -->
     <div class="provider-paths" data-animate="2">
@@ -70,8 +62,8 @@
 
     <!-- Skills Matrix Table -->
     <div class="skills-matrix glass-panel" data-animate="3" v-loading="loading">
-      <el-table :data="tableData" style="width: 100%" height="calc(100vh - 350px)" :header-cell-style="{ background: 'transparent' }" :row-style="{ background: 'transparent' }">
-        <el-table-column prop="name" label="Skill Name" min-width="180" sortable>
+      <el-table :data="tableData" style="width: 100%" height="calc(100vh - 400px)" :header-cell-style="{ background: 'transparent' }" :row-style="{ background: 'transparent' }">
+        <el-table-column prop="name" label="技能名称" min-width="180" sortable>
           <template #default="{ row }">
             <div class="skill-name-cell">
               <div class="skill-icon-wrapper">
@@ -80,14 +72,14 @@
               <div>
                 <div class="skill-name">{{ row.name }}</div>
                 <div class="skill-provider-source" v-if="row.source">
-                    Source: <span :class="['source-tag', row.source]">{{ capitalize(row.source) }}</span>
+                    来源: <span :class="['source-tag', row.source]">{{ capitalize(row.source) }}</span>
                 </div>
               </div>
             </div>
           </template>
         </el-table-column>
         
-        <el-table-column v-for="provider in providerList" :key="provider" :label="capitalize(provider)" align="center" width="80">
+        <el-table-column v-for="provider in providerList" :key="provider" :label="capitalize(provider)" align="center" width="100">
           <template #default="{ row }">
             <div class="status-cell">
               <div v-if="row.providers[provider]" class="status-dot success"></div>
@@ -113,13 +105,13 @@
     <!-- Create Skill Dialog -->
     <el-dialog v-model="showCreateDialog" title="新建 Skill" width="500px" class="glass-dialog">
       <el-form label-position="top">
-        <el-form-item label="Skill 名称" required>
+        <el-form-item label="技能名称" required>
           <el-input v-model="newSkill.name" placeholder="例如: python-utils" />
         </el-form-item>
         <el-form-item label="描述">
           <el-input v-model="newSkill.description" type="textarea" :rows="3" placeholder="简要描述此 Skill 的功能..." />
         </el-form-item>
-        <el-form-item label="目标提供商" required>
+        <el-form-item label="部署目标" required>
           <div class="provider-checkboxes">
              <el-checkbox-group v-model="newSkill.providers">
                 <el-checkbox v-for="p in providerList" :key="p" :label="p" border>{{ capitalize(p) }}</el-checkbox>
@@ -130,7 +122,7 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="showCreateDialog = false">取消</el-button>
-          <el-button color="#626aef" :loading="creating" @click="handleCreate" :disabled="!isFormValid">
+          <el-button color="#646cff" :loading="creating" @click="handleCreate" :disabled="!isFormValid">
             立即创建
           </el-button>
         </span>
@@ -138,8 +130,8 @@
     </el-dialog>
 
     <!-- Import Skill Dialog (Simple Provider Selection) -->
-    <el-dialog v-model="showImportDialog" title="导入 Skill" width="400px" class="glass-dialog">
-        <p>选择要将 Skill 导入到的目标提供商：</p>
+    <el-dialog v-model="showImportDialog" title="导入技能" width="450px" class="glass-dialog">
+        <p class="dialog-subtitle">选择要将技能导入到的目标平台：</p>
         <div class="provider-checkboxes">
             <el-checkbox-group v-model="importTargetProviders">
                <el-checkbox v-for="p in providerList" :key="p" :label="p" border>{{ capitalize(p) }}</el-checkbox>
@@ -372,7 +364,6 @@ onMounted(() => {
   flex-direction: column;
   gap: 20px;
   height: 100%;
-  padding: 10px;
 }
 
 .actions-header {
@@ -386,7 +377,7 @@ onMounted(() => {
   margin: 0;
   font-size: 28px;
   font-weight: 700;
-  background: linear-gradient(135deg, #626aef, #a0cfff);
+  background: var(--gradient-primary, linear-gradient(135deg, #626aef, #a0cfff));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   letter-spacing: -0.5px;
@@ -395,15 +386,15 @@ onMounted(() => {
 .subtitle {
   margin: 6px 0 0;
   font-size: 14px;
-  color: var(--text-dim);
+  color: var(--text-secondary);
   opacity: 0.8;
 }
 
 /* Glass Panel Styles */
 .glass-panel {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--bg-card);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
@@ -465,7 +456,7 @@ onMounted(() => {
 
 .path-full-value {
     font-size: 10px;
-    color: var(--text-dim);
+    color: var(--text-secondary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -524,7 +515,7 @@ onMounted(() => {
 
 .skill-provider-source {
   font-size: 11px;
-  color: var(--text-dim);
+  color: var(--text-secondary);
 }
 
 .source-tag {
@@ -572,6 +563,12 @@ onMounted(() => {
 }
 
 /* Dialog Styles */
+.dialog-subtitle {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
 .provider-checkboxes {
     display: flex;
     flex-wrap: wrap;
@@ -585,11 +582,11 @@ onMounted(() => {
     text-align: center;
     transition: all 0.2s ease;
     margin-top: 20px;
-    background: rgba(255,255,255,0.01);
+    background: rgba(0,0,0,0.1);
 }
 .import-drop-zone:hover, .import-drop-zone.is-dragover {
-    border-color: #626aef;
-    background: rgba(98, 106, 239, 0.05);
+    border-color: #646cff;
+    background: rgba(100, 108, 255, 0.05);
 }
 .import-actions {
     display: flex;
@@ -599,7 +596,7 @@ onMounted(() => {
 }
 .upload-icon {
     margin-bottom: 10px;
-    color: var(--text-dim);
+    color: var(--text-secondary);
 }
 
 /* Status Toast */

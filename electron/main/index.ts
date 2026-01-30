@@ -686,6 +686,7 @@ function createWindow(): void {
       contextIsolation: true,
       sandbox: false
     },
+    title: 'AI 智控中心',
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
     frame: true
   })

@@ -6,31 +6,31 @@
         <svg class="path-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M3 7V17C3 19.2091 4.79086 21 7 21H17C19.2091 21 21 19.2091 21 17V9C21 6.79086 19.2091 5 17 5H11C9.34315 5 8 6.34315 8 8V9" stroke="currentColor" stroke-width="2"/>
         </svg>
-        <span class="path-label">config.toml</span>
-        <span class="path-text">{{ configPath || 'Loading...' }}</span>
+        <span class="path-label">配置文件 (config)</span>
+        <span class="path-text">{{ configPath || '加载中...' }}</span>
       </div>
       <div class="path-row">
         <svg class="path-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M12 3H7C5.89543 3 5 3.89543 5 5V19C5 20.1046 5.89543 21 7 21H17C18.1046 21 19 20.1046 19 19V10L12 3Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
           <path d="M12 3V10H19" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
         </svg>
-        <span class="path-label">auth.json</span>
-        <span class="path-text">{{ authPath || 'Loading...' }}</span>
+        <span class="path-label">认证文件 (auth)</span>
+        <span class="path-text">{{ authPath || '加载中...' }}</span>
       </div>
     </div>
 
     <!-- config.toml Raw View -->
     <div class="raw-toml" data-animate="0.5">
       <div class="raw-header">
-        <div class="raw-title">config.toml</div>
-        <el-button size="small" @click="refreshConfigRaw">刷新</el-button>
+        <div class="raw-title">config.toml 预览</div>
+        <el-button size="small" @click="refreshConfigRaw">刷新内容</el-button>
       </div>
       <el-input
         :model-value="configRaw"
         type="textarea"
         :rows="7"
         readonly
-        placeholder="(config.toml not found yet)"
+        placeholder="(尚未找到 config.toml)"
       />
     </div>
 
@@ -59,7 +59,7 @@
       <!-- Active Provider Selection -->
       <div class="form-group" data-animate="1">
         <el-form-item label="活跃模型提供商">
-          <el-select v-model="activeProviderValue" placeholder="选择提供商...">
+          <el-select v-model="activeProviderValue" placeholder="请选择提供商...">
             <el-option
               v-for="provider in providerConfigs"
               :key="provider"
@@ -72,31 +72,35 @@
 
       <!-- Model Settings -->
       <div class="form-group" data-animate="1.5">
-        <el-form-item label="模型 (model)">
+        <el-form-item label="默认模型 (model)">
           <el-input
             :model-value="config.model || ''"
-            placeholder="例如: gpt-5.2"
+            placeholder="例如: gpt-4, gpt-5.2"
             @input="codexStore.setModel($event)"
           />
         </el-form-item>
 
-        <el-form-item label="推理强度 (model_reasoning_effort)">
+        <el-form-item label="推理强度 (reasoning_effort)">
           <el-select
             :model-value="config.model_reasoning_effort || ''"
-            placeholder="例如: high"
+            placeholder="选择推理强度"
             @change="codexStore.setModelReasoningEffort($event)"
           >
-            <el-option label="low" value="low" />
-            <el-option label="medium" value="medium" />
-            <el-option label="high" value="high" />
+            <el-option label="低 (low)" value="low" />
+            <el-option label="中 (medium)" value="medium" />
+            <el-option label="高 (high)" value="high" />
           </el-select>
         </el-form-item>
 
-        <el-form-item label="禁用响应存储 (disable_response_storage)">
-          <el-switch
-            :model-value="!!config.disable_response_storage"
-            @change="codexStore.setDisableResponseStorage($event)"
-          />
+        <el-form-item label="响应存储设置">
+           <div class="switch-container">
+             <span class="switch-label">如果不希望本地存储响应数据，请开启此选项。</span>
+             <el-switch
+                :model-value="!!config.disable_response_storage"
+                active-text="禁用响应存储"
+                @change="codexStore.setDisableResponseStorage($event)"
+             />
+           </div>
         </el-form-item>
       </div>
 
@@ -127,7 +131,7 @@
                   <path d="M21 16V8C21 6.89543 20.1046 6 19 6H5C3.89543 6 3 6.89543 3 8V16C3 17.1046 3.89543 18 5 18H19C20.1046 18 21 17.1046 21 16Z" stroke="currentColor" stroke-width="2"/>
                 </svg>
                 {{ providerName }}
-                <span v-if="providerName === activeProviderValue" class="active-badge">Active</span>
+                <span v-if="providerName === activeProviderValue" class="active-badge">当前活跃</span>
               </div>
               <el-button
                 v-if="providerName !== activeProviderValue"
@@ -144,7 +148,7 @@
 
             <div class="provider-fields">
               <!-- API Base -->
-              <el-form-item :label="`API Base URL (${providerName})`">
+              <el-form-item :label="`接口地址 (${providerName})`">
                 <el-input
                   :model-value="providerConfig.base_url || ''"
                   placeholder="https://api.example.com"
@@ -160,7 +164,7 @@
       <!-- Authentication Keys -->
       <div class="form-group" data-animate="3">
         <div class="section-header">
-          <h3>API 密钥 (auth.json)</h3>
+          <h3>API 密钥配置 (auth.json)</h3>
         </div>
         <div class="auth-keys-editor">
           <div
@@ -173,7 +177,7 @@
               v-model="auth[keyName]"
               type="password"
               show-password
-              placeholder="Enter API key..."
+              placeholder="请输入 API Key..."
             />
             <el-button
               type="danger"
@@ -197,7 +201,7 @@
               <path d="M17 3L5 12.5L9 15L15.5 9L21 3V21H17V3Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
             </svg>
           </template>
-          {{ savingConfig ? '保存中...' : '保存配置' }}
+          {{ savingConfig ? '正在保存...' : '保存主要配置' }}
         </el-button>
         <el-button type="success" size="large" @click="handleSaveAuth" :loading="savingAuth">
           <template #icon>
@@ -214,7 +218,7 @@
               <path d="M3 7V17C3 19.2091 4.79086 21 7 21H17C19.2091 21 21 19.2091 21 17V9C21 6.79086 19.2091 5 17 5H11C9.34315 5 8 6.34315 8 8V9" stroke="currentColor" stroke-width="2"/>
             </svg>
           </template>
-          打开目录
+          打开配置目录
         </el-button>
       </div>
 
@@ -237,11 +241,11 @@
     <!-- Presets -->
     <div class="presets-section" data-animate="4.5">
       <div class="section-header">
-        <h3>预设</h3>
+        <h3>多环境预设</h3>
       </div>
 
       <div class="preset-actions">
-        <el-select v-model="selectedPreset" placeholder="Select preset..." style="width: 220px" filterable>
+        <el-select v-model="selectedPreset" placeholder="选择预设..." style="width: 220px" filterable>
           <el-option v-for="name in presetNames" :key="name" :label="name" :value="name" />
         </el-select>
         <el-button type="primary" :disabled="!selectedPreset" @click="handleApplyPreset">
@@ -253,20 +257,20 @@
       </div>
 
       <div class="preset-save">
-        <el-input v-model="newPresetName" placeholder="Preset name..." style="width: 220px" />
+        <el-input v-model="newPresetName" placeholder="输入新预设名称..." style="width: 220px" />
         <el-button type="success" :disabled="!newPresetName" @click="handleSavePreset">
-          保存为预设
+          保存当前为预设
         </el-button>
       </div>
     </div>
 
     <!-- Add Provider Dialog -->
-    <el-dialog v-model="showAddProviderDialog" title="添加提供商" width="400px">
+    <el-dialog v-model="showAddProviderDialog" title="添加提供商" width="400px" class="glass-dialog">
       <el-form label-position="top">
-        <el-form-item label="Provider Name">
+        <el-form-item label="提供商名称 (Provider Name)">
           <el-input
             v-model="newProviderName"
-            placeholder="e.g., openai, anthropic, fox"
+            placeholder="例如: openai, anthropic, fox"
           />
         </el-form-item>
       </el-form>
@@ -311,7 +315,7 @@ onMounted(async () => {
   setTimeout(() => {
     const providers = config.value.model_providers || {}
     if (Object.keys(providers).length === 0) {
-      smartSuggestion.value = '建议先添加一个模型提供商配置'
+      smartSuggestion.value = '建议先添加一个模型提供商配置，例如 openai'
     }
   }, 1000)
 
@@ -371,7 +375,7 @@ async function handleAddProvider() {
   ElMessage.success(`已添加提供商 "${name}"`)
   showAddProviderDialog.value = false
   newProviderName.value = ''
-  smartSuggestion.value = `已添加提供商 "${name}"，请在下方配置其参数`
+  smartSuggestion.value = `已添加提供商 "${name}"，请在下方配置其接口地址`
 }
 
 async function handleRemoveProvider(name: string) {
@@ -389,23 +393,6 @@ async function handleRemoveProvider(name: string) {
   }
 }
 
-function handleAddAuthKey() {
-  const name = newAuthKeyName.value.trim().toUpperCase()
-  if (!name) {
-    ElMessage.error('请输入 Key 名称')
-    return
-  }
-
-  if (auth.value[name]) {
-    ElMessage.error('该 Key 已存在')
-    return
-  }
-
-  codexStore.updateAuthKey(name, '')
-  newAuthKeyName.value = ''
-  ElMessage.success('已添加 API Key')
-}
-
 function handleRemoveAuthKey(name: string) {
   codexStore.updateAuthKey(name, '')
   delete auth.value[name]
@@ -418,7 +405,7 @@ async function handleSaveConfig() {
   savingConfig.value = false
 
   if (statusMessage.value?.type === 'success') {
-    smartSuggestion.value = '配置已保存！别忘了也保存你的 API Keys'
+    smartSuggestion.value = '主配置已保存！如果修改了 Key，别忘了也保存 API Keys'
   }
 }
 
@@ -507,7 +494,7 @@ async function handleSavePreset() {
   border: 1px solid var(--border-color);
   font-family: 'SF Mono', Monaco, monospace;
   font-size: 12px;
-  color: var(--text-dim);
+  color: var(--text-secondary);
 }
 
 .path-row {
@@ -520,12 +507,13 @@ async function handleSavePreset() {
   width: 16px;
   height: 16px;
   flex-shrink: 0;
+  opacity: 0.7;
 }
 
 .path-label {
-  width: 80px;
+  width: 90px;
   flex-shrink: 0;
-  color: var(--text-normal);
+  color: var(--text-primary);
   opacity: 0.85;
   font-weight: 600;
 }
@@ -562,7 +550,7 @@ async function handleSavePreset() {
 .raw-title {
   font-weight: 600;
   font-size: 14px;
-  color: var(--text-normal);
+  color: var(--text-primary);
 }
 
 /* Smart Suggestion */
@@ -580,7 +568,7 @@ async function handleSavePreset() {
   width: 40px;
   height: 40px;
   border-radius: 12px;
-  background: var(--gradient-primary);
+  background: var(--gradient-primary, #10b981);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -594,13 +582,13 @@ async function handleSavePreset() {
 .suggestion-title {
   font-size: 14px;
   font-weight: 600;
-  color: var(--color-green);
+  color: #10b981;
   margin-bottom: 2px;
 }
 
 .suggestion-text {
   font-size: 13px;
-  color: var(--text-dim);
+  color: var(--text-secondary);
 }
 
 .suggestion-close {
@@ -609,7 +597,7 @@ async function handleSavePreset() {
   border-radius: 8px;
   border: none;
   background: transparent;
-  color: var(--text-dim);
+  color: var(--text-secondary);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -634,12 +622,22 @@ async function handleSavePreset() {
   transform: translateY(0);
 }
 
+.switch-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.switch-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
 /* Presets */
 .presets-section {
   background: var(--bg-card);
   border-radius: 20px;
   padding: 24px;
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
   border: 1px solid var(--border-color);
   opacity: 0;
   transform: translateY(20px);
@@ -678,7 +676,7 @@ async function handleSavePreset() {
   font-size: 16px;
   font-weight: 600;
   margin: 0;
-  background: var(--gradient-primary);
+  background: var(--gradient-primary, linear-gradient(135deg, #626aef, #a0cfff));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -705,8 +703,8 @@ async function handleSavePreset() {
 }
 
 .provider-card.active {
-  border-color: var(--color-primary);
-  background: rgba(99, 102, 241, 0.05);
+  border-color: var(--accent-primary, #646cff);
+  background: rgba(100, 108, 255, 0.05);
 }
 
 .provider-header {
@@ -722,7 +720,7 @@ async function handleSavePreset() {
   gap: 8px;
   font-size: 14px;
   font-weight: 600;
-  color: var(--text-normal);
+  color: var(--text-primary);
 }
 
 .provider-name svg {
@@ -732,12 +730,11 @@ async function handleSavePreset() {
 
 .active-badge {
   padding: 2px 8px;
-  background: var(--color-primary);
+  background: var(--accent-primary, #646cff);
   color: white;
   font-size: 10px;
   font-weight: 600;
   border-radius: 6px;
-  text-transform: uppercase;
 }
 
 .provider-fields {
@@ -764,16 +761,10 @@ async function handleSavePreset() {
   font-family: 'SF Mono', Monaco, monospace;
   font-size: 12px;
   font-weight: 600;
-  color: var(--text-dim);
+  color: var(--text-secondary);
   padding: 8px 12px;
   background: rgba(99, 102, 241, 0.1);
   border-radius: 8px;
-}
-
-.add-auth-key {
-  display: flex;
-  gap: 12px;
-  margin-top: 8px;
 }
 
 /* Button Group */
@@ -798,45 +789,7 @@ async function handleSavePreset() {
   border-radius: 12px;
   font-size: 14px;
   font-weight: 500;
-}
-
-.status svg {
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-}
-
-.status.success {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.15) 100%);
-  color: var(--color-green);
-  border: 1px solid rgba(16, 185, 129, 0.3);
-}
-
-.status.error {
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.15) 100%);
-  color: var(--color-red);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-}
-
-/* Transitions */
-.slide-fade-enter-active,
-.slide-fade-leave-active {
-  transition: all 0.3s ease;
-}
-
-.slide-fade-enter-from,
-.slide-fade-leave-to {
-  opacity: 0;
-  transform: translateY(-10px);
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
 }
 </style>
