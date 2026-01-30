@@ -59,6 +59,30 @@ const api: ElectronAPI = {
   },
   webUtils: {
     getPathForFile: (file: File) => webUtils.getPathForFile(file)
+  },
+  // Event listener methods for progress updates (with channel whitelist for security)
+  on: (channel: string, listener: (...args: any[]) => void) => {
+    // 只允许监听特定的安装进度通道
+    const allowedChannels = [
+      'installer:progress:nodejs',
+      'installer:progress:claude',
+      'installer:progress:codex'
+    ]
+    if (allowedChannels.includes(channel)) {
+      ipcRenderer.on(channel, (_event, ...args) => listener(...args))
+    } else {
+      console.warn(`Blocked attempt to listen on unauthorized channel: ${channel}`)
+    }
+  },
+  removeListener: (channel: string, listener: (...args: any[]) => void) => {
+    const allowedChannels = [
+      'installer:progress:nodejs',
+      'installer:progress:claude',
+      'installer:progress:codex'
+    ]
+    if (allowedChannels.includes(channel)) {
+      ipcRenderer.removeListener(channel, listener)
+    }
   }
 }
 

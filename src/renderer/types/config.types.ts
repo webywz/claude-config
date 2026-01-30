@@ -70,44 +70,5 @@ export interface InstallProgress {
   message: string
 }
 
-declare global {
-  interface Window {
-    electronAPI: {
-      config: {
-        load: () => Promise<ClaudeConfig>
-        save: (config: ClaudeConfig) => Promise<boolean>
-      }
-      codex: {
-        loadConfig: () => Promise<CodexConfig>
-        saveConfig: (config: CodexConfig) => Promise<boolean>
-        loadAuth: () => Promise<CodexAuth>
-        saveAuth: (auth: CodexAuth) => Promise<boolean>
-        getConfigPath: () => Promise<string>
-        getAuthPath: () => Promise<string>
-        getConfigRaw: () => Promise<string>
-        loadPresets: () => Promise<CodexPresets>
-        savePresets: (presets: CodexPresets) => Promise<boolean>
-        applyPreset: (name: string) => Promise<{ success: boolean; config?: CodexConfig }>
-        deletePreset: (name: string) => Promise<boolean>
-      }
-      presets: {
-        load: () => Promise<Presets>
-        save: (presets: Presets) => Promise<boolean>
-        apply: (name: string) => Promise<{ success: boolean; config?: ClaudeConfig }>
-        delete: (name: string) => Promise<boolean>
-      }
-      system: {
-        openFolder: () => Promise<void>
-        openCodexFolder: () => Promise<void>
-        getConfigPath: () => Promise<string>
-        getEnvVars: () => Promise<Array<{ name: string; value: string; type: 'user' | 'system' }>>
-        setEnvVar: (name: string, value: string) => Promise<boolean>
-        deleteEnvVar: (name: string) => Promise<boolean>
-        getPaths: () => Promise<PathEntry[]>
-        addPath: (path: string) => Promise<boolean>
-        removePath: (path: string) => Promise<boolean>
-        movePath: (fromIndex: number, toIndex: number) => Promise<boolean>
-      }
-    }
-  }
-}
+// Note: ElectronAPI type is defined in electron/config/types.ts
+// and Window.electronAPI is declared in env.d.ts

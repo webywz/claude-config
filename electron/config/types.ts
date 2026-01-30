@@ -130,6 +130,9 @@ export interface ElectronAPI {
   webUtils: {
     getPathForFile: (file: File) => string
   }
+  // Event listener methods for progress updates
+  on: (channel: string, listener: (...args: any[]) => void) => void
+  removeListener: (channel: string, listener: (...args: any[]) => void) => void
 }
 
 // Skills Types
