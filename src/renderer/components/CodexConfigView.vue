@@ -311,6 +311,10 @@ const newPresetName = ref('')
 
 onMounted(async () => {
   activeProviderValue.value = codexStore.activeProvider
+  
+  // Ensure paths and raw config are loaded
+  await codexStore.loadPaths()
+  await codexStore.loadConfigRaw()
 
   setTimeout(() => {
     const providers = config.value.model_providers || {}
@@ -519,9 +523,13 @@ async function handleSavePreset() {
 }
 
 .path-text {
+  flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-family: 'SF Mono', Monaco, monospace;
+  opacity: 0.8;
+  min-width: 0; /* Enable truncation in flex item */
 }
 
 /* Raw TOML Viewer */
