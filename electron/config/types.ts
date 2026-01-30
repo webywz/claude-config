@@ -107,6 +107,7 @@ export interface ElectronAPI {
     addPath: (path: string) => Promise<boolean>
     removePath: (path: string) => Promise<boolean>
     movePath: (fromIndex: number, toIndex: number) => Promise<boolean>
+    showOpenDialog: (options: any) => Promise<any>
   }
   installer: {
     checkTool: (toolId: string) => Promise<ToolInstallInfo>
@@ -124,6 +125,9 @@ export interface ElectronAPI {
     create: (input: SkillCreateInput) => Promise<{ success: boolean; message: string }>
     delete: (skillName: string) => Promise<{ success: boolean; message: string }>
     import: (filePath: string, targetProviders: SkillProvider[]) => Promise<{ success: boolean; message: string }>
+  }
+  webUtils: {
+    getPathForFile: (file: File) => string
   }
 }
 

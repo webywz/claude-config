@@ -660,6 +660,12 @@ ipcMain.handle('skills:delete', (_, skillName: string): { success: boolean, mess
   return skillsManager.deleteSkill(skillName)
 })
 
+ipcMain.handle('system:show-open-dialog', async (_, options: Electron.OpenDialogOptions): Promise<Electron.OpenDialogReturnValue> => {
+  return await dialog.showOpenDialog(options)
+})
+
+
+
 ipcMain.handle('skills:import', async (_, filePath: string, targetProviders: SkillProvider[]): Promise<{ success: boolean, message: string }> => {
   return await skillsManager.importSkill(filePath, targetProviders)
 })

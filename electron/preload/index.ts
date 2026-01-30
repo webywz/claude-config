@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from 'electron'
+import { contextBridge, ipcRenderer, webUtils } from 'electron'
 import type { ElectronAPI } from '../config/types'
 
 const api: ElectronAPI = {
@@ -36,7 +36,8 @@ const api: ElectronAPI = {
     getPaths: () => ipcRenderer.invoke('system:get-paths'),
     addPath: (path) => ipcRenderer.invoke('system:add-path', path),
     removePath: (path) => ipcRenderer.invoke('system:remove-path', path),
-    movePath: (from, to) => ipcRenderer.invoke('system:move-path', from, to)
+    movePath: (from, to) => ipcRenderer.invoke('system:move-path', from, to),
+    showOpenDialog: (options) => ipcRenderer.invoke('system:show-open-dialog', options)
   },
   installer: {
     checkTool: (toolId) => ipcRenderer.invoke('installer:check-tool', toolId),
@@ -54,6 +55,9 @@ const api: ElectronAPI = {
     create: (input) => ipcRenderer.invoke('skills:create', input),
     delete: (skillName) => ipcRenderer.invoke('skills:delete', skillName),
     import: (filePath, targetProviders) => ipcRenderer.invoke('skills:import', filePath, targetProviders)
+  },
+  webUtils: {
+    getPathForFile: (file: File) => webUtils.getPathForFile(file)
   }
 }
 

@@ -18,14 +18,6 @@
           </template>
           导入 Skill (Zip/文件夹)
         </el-button>
-        <el-button type="success" @click="showCreateDialog = true">
-          <template #icon>
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </template>
-          新建 Skill
-        </el-button>
         <el-button type="primary" :loading="syncing" @click="handleSyncAll" class="sync-btn">
           <template #icon>
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="rotate-icon" :class="{ spinning: syncing }">
@@ -154,7 +146,6 @@
             </el-checkbox-group>
          </div>
          <div class="import-drop-zone" 
-              @click="triggerFileInput" 
               @drop.prevent="handleDrop" 
               @dragover.prevent="dragOver = true" 
               @dragleave.prevent="dragOver = false"
@@ -164,7 +155,11 @@
                 <polyline points="17 8 12 3 7 8"/>
                 <line x1="12" y1="3" x2="12" y2="15"/>
             </svg>
-            <p>点击选择文件 (Zip) 或拖拽文件到这里</p>
+            <p>拖拽文件到这里</p>
+            <div class="import-actions">
+                <el-button type="primary" size="small" @click="triggerFileInput('file')">选择 Zip 文件</el-button>
+                <el-button size="small" @click="triggerFileInput('dir')">选择文件夹</el-button>
+            </div>
          </div>
     </el-dialog>
 
@@ -270,12 +265,47 @@ function handleDelete(name: string) {
 }
 
 // Import Logic
-function handleImportClick() {
+async function handleImportClick() {
     showImportDialog.value = true
 }
 
-function triggerFileInput() {
-    fileInput.value?.click()
+async function triggerFileInput(mode: 'file' | 'dir' = 'file') {
+    // Legacy file input trigger
+    // Use native dialog if possible, else fallback
+    try {
+        if (!window.electronAPI?.system?.showOpenDialog) {
+            throw new Error('API not available: system.showOpenDialog')
+        }
+
+        const properties: ('openFile' | 'openDirectory')[] = mode === 'dir' ? ['openDirectory'] : ['openFile']
+        
+        const result = await window.electronAPI.system.showOpenDialog({
+            properties: properties,
+            filters: [
+                { name: 'Skills', extensions: ['zip', 'md'] },
+                { name: 'All Files', extensions: ['*'] }
+            ]
+        })
+        
+        if (!result.canceled && result.filePaths.length > 0) {
+            const filePath = result.filePaths[0]
+            const success = await store.importSkill(filePath, [...importTargetProviders.value])
+            if (success) {
+                showImportDialog.value = false
+            }
+        }
+    } catch (e) {
+        console.error('Dialog failed, using fallback input', e)
+        const errorMessage = e instanceof Error ? e.message : String(e)
+        // store.statusMessage = { type: 'error', text: `Dialog failed: ${errorMessage}. Trying fallback...` }
+        
+        // Fallback (Only supports file selection adequately)
+        if (mode === 'file') {
+             fileInput.value?.click()
+        } else {
+             store.statusMessage = { type: 'error', text: '文件夹选择需要原生 API 支持' }
+        }
+    }
 }
 
 async function handleFileSelected(event: Event) {
@@ -297,16 +327,29 @@ async function handleDrop(event: DragEvent) {
 }
 
 async function processImport(file: File) {
-    // In Electron, File object exposes 'path' property which is the absolute path
-    // We need to cast it to any to access it because TS standard File doesn't have it
-    const filePath = (file as any).path
+    // Use webUtils to get the path
+    let filePath = ''
+    try {
+        if (window.electronAPI.webUtils) {
+            filePath = window.electronAPI.webUtils.getPathForFile(file)
+        } else {
+             // Fallback for older electron / direct exposure
+            filePath = (file as any).path
+        }
+    } catch (e) {
+        console.error('Failed to get path', e)
+        filePath = (file as any).path
+    }
+
     if (filePath) {
-        const success = await store.importSkill(filePath, importTargetProviders.value)
+        const success = await store.importSkill(filePath, [...importTargetProviders.value])
         if (success) {
             showImportDialog.value = false
         }
     } else {
         console.error('Cannot determine file path for import')
+        const apiStatus = window.electronAPI.webUtils ? 'Active' : 'Missing'
+        store.statusMessage = { type: 'error', text: `无法读取路径 (API: ${apiStatus}). 请检查控制台日志。` }
     }
 }
 
@@ -540,7 +583,6 @@ onMounted(() => {
     border-radius: 12px;
     padding: 30px 20px;
     text-align: center;
-    cursor: pointer;
     transition: all 0.2s ease;
     margin-top: 20px;
     background: rgba(255,255,255,0.01);
@@ -548,6 +590,12 @@ onMounted(() => {
 .import-drop-zone:hover, .import-drop-zone.is-dragover {
     border-color: #626aef;
     background: rgba(98, 106, 239, 0.05);
+}
+.import-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 15px;
 }
 .upload-icon {
     margin-bottom: 10px;
