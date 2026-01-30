@@ -2,10 +2,10 @@ import { exec } from 'child_process'
 import { promisify } from 'util'
 import { join } from 'path'
 import { homedir, platform } from 'os'
-import { existsSync, mkdirSync, unlinkSync, createWriteStream } from 'fs'
+import { existsSync, mkdirSync, unlinkSync, createWriteStream, renameSync } from 'fs'
 import { BrowserWindow } from 'electron'
-import { https } from 'https'
-import { http } from 'http'
+import * as https from 'https'
+import * as http from 'http'
 import type { ToolInstallInfo, InstallStep } from '../config/types'
 
 const execAsync = promisify(exec)
@@ -59,18 +59,11 @@ export class InstallerService {
       },
       codex: {
         id: 'codex',
-        name: 'Codex CLI',
-        description: 'Codex 命令行工具',
+        name: 'OpenAI Codex CLI',
+        description: 'OpenAI Codex 命令行工具',
         verifyCommand: 'codex --version',
-        // 国内 GitHub 代理 + 官方回退源
-        downloadUrls: [
-          // 主镜像：ghproxy.com GitHub 代理 (国内快速)
-          'https://ghproxy.com/https://github.com/anthropics/codex/releases/latest/download/codex-{platform}-{arch}.exe',
-          // 回退源 1：GitHub 官方
-          'https://github.com/anthropics/codex/releases/latest/download/codex-{platform}-{arch}.exe'
-        ],
-        installCommand: '"{installer}" /S /D="{installDir}"',
-        envPath: '{installDir}',
+        // 通过 npm 安装，使用国内镜像源
+        installCommand: 'npm install -g @openai/codex --registry=https://registry.npmmirror.com',
         dependsOn: ['nodejs']
       }
     }
@@ -179,13 +172,14 @@ export class InstallerService {
         file.on('finish', () => {
           file.close()
           // Rename temp file to final name
-          const fs = require('fs')
-          fs.renameSync(tempPath, savePath)
+          renameSync(tempPath, savePath)
           resolve()
         })
 
         file.on('error', (err) => {
-          unlinkSync(tempPath).catch(() => {})
+          try {
+            unlinkSync(tempPath)
+          } catch {}
           reject(err)
         })
       })

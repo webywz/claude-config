@@ -107,8 +107,8 @@ export const useInstallerStore = defineStore('installer', () => {
     try {
       addLog(toolId, '开始安装...', 'info')
 
-      // Check if tool needs download
-      if (toolId === 'nodejs' || toolId === 'codex') {
+      // Check if tool needs download (only nodejs needs download)
+      if (toolId === 'nodejs') {
         addLog(toolId, '下载安装包...', 'info')
         toolStatus.value[toolId].step = 'downloading'
         const installerPath = await installerIO.downloadTool(toolId)
@@ -125,7 +125,7 @@ export const useInstallerStore = defineStore('installer', () => {
         addLog(toolId, '配置环境变量...', 'info')
         toolStatus.value[toolId].step = 'configuring'
         await installerIO.configureToolEnv(toolId, installerPath)
-      } else if (toolId === 'claude') {
+      } else if (toolId === 'claude' || toolId === 'codex') {
         // Check Node.js dependency
         const nodeStatus = toolStatus.value.nodejs
         if (!nodeStatus.installed) {
