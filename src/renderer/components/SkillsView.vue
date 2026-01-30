@@ -7,7 +7,7 @@
         <p class="subtitle">同步各个 AI 工具的 Skills 配置</p>
       </div>
       <div class="header-right">
-        <el-button color="#646cff" :dark="true" @click="handleImportClick">
+        <el-button color="#8B5CF6" :dark="true" @click="handleImportClick">
           <template #icon>
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M12 16L12 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -377,10 +377,11 @@ onMounted(() => {
   margin: 0;
   font-size: 28px;
   font-weight: 700;
-  background: var(--gradient-primary, linear-gradient(135deg, #626aef, #a0cfff));
+  background: var(--accent-gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   letter-spacing: -0.5px;
+  filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.3));
 }
 
 .subtitle {
@@ -428,7 +429,7 @@ onMounted(() => {
 .path-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  border-color: rgba(98, 106, 239, 0.3);
+  border-color: rgba(139, 92, 246, 0.4);
 }
 
 .path-card:hover::before {
@@ -473,8 +474,8 @@ onMounted(() => {
 .provider-icon.claude { background: #d97757; color: #d97757; }
 .provider-icon.codex { background: #10a37f; color: #10a37f; }
 .provider-icon.gemini { background: #4b90ff; color: #4b90ff; }
-.provider-icon.antigravity { background: #8e24aa; color: #8e24aa; }
-.provider-icon.trae { background: #ff9800; color: #ff9800; }
+.provider-icon.antigravity { background: #8B5CF6; color: #8B5CF6; }
+.provider-icon.trae { background: #F59E0B; color: #F59E0B; }
 
 .skills-matrix {
   flex: 1;
@@ -494,12 +495,12 @@ onMounted(() => {
 .skill-icon-wrapper {
   width: 40px;
   height: 40px;
-  background: linear-gradient(135deg, rgba(98, 106, 239, 0.1) 0%, rgba(98, 106, 239, 0.05) 100%);
+  background: rgba(139, 92, 246, 0.1);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(98, 106, 239, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.1);
 }
 
 .skill-icon {
@@ -522,7 +523,7 @@ onMounted(() => {
     display: inline-block;
     padding: 1px 6px;
     border-radius: 4px;
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.08);
     font-weight: 500;
 }
 .source-tag.claude { color: #d97757; background: rgba(217, 119, 87, 0.1); }
@@ -585,8 +586,8 @@ onMounted(() => {
     background: rgba(0,0,0,0.1);
 }
 .import-drop-zone:hover, .import-drop-zone.is-dragover {
-    border-color: #646cff;
-    background: rgba(100, 108, 255, 0.05);
+    border-color: #8B5CF6;
+    background: rgba(139, 92, 246, 0.05);
 }
 .import-actions {
     display: flex;

@@ -282,15 +282,50 @@ async function handleOpenFolder() {
 <style>
 /* Global Variables & Reset */
 :root {
-  --bg-dark: #0f1115;
-  --bg-sidebar: #161b22;
-  --bg-card: rgba(30, 35, 45, 0.6);
-  --accent-primary: #646cff;
-  --accent-hover: #7d84ff;
-  --text-primary: #e6edf3;
-  --text-secondary: #8b949e;
-  --border-color: rgba(255, 255, 255, 0.1);
+  /* Deep Space Theme */
+  --bg-dark: #0B0B10; /* Deep Space Black */
+  --bg-sidebar: #0f1014;
+  --bg-card: rgba(255, 255, 255, 0.03); 
+  --accent-primary: #8B5CF6; /* Violet */
+  --accent-gradient: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
+  --accent-hover: #A78BFA;
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8; /* Slate 400 */
+  --border-color: rgba(255, 255, 255, 0.08);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.08);
   --sidebar-width: 260px;
+  
+  /* Shadows & Glows */
+  --shadow-glow: 0 0 20px rgba(139, 92, 246, 0.15);
+  --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+
+  /* Element Plus Overrides - FORCE DARK */
+  --el-color-primary: var(--accent-primary);
+  --el-text-color-regular: var(--text-primary);
+  --el-text-color-primary: var(--text-primary);
+  --el-text-color-secondary: var(--text-secondary);
+  --el-bg-color: #1a1b26;
+  --el-bg-color-overlay: #1e2028;
+  --el-fill-color-blank: transparent;
+  --el-border-color: rgba(255, 255, 255, 0.1);
+  --el-border-color-light: rgba(255, 255, 255, 0.1);
+  --el-mask-color: rgba(0, 0, 0, 0.7);
+
+  /* Input Overrides */
+  --el-input-bg-color: rgba(0, 0, 0, 0.3);
+  --el-input-text-color: #F8FAFC;
+  --el-input-border-color: rgba(255, 255, 255, 0.1);
+  --el-input-hover-border-color: var(--accent-hover);
+  --el-input-focus-border-color: var(--accent-primary);
+  
+  /* Table Overrides */
+  --el-table-bg-color: transparent;
+  --el-table-tr-bg-color: transparent;
+  --el-table-header-bg-color: transparent;
+  --el-table-row-hover-bg-color: rgba(255, 255, 255, 0.05);
+  --el-table-border-color: rgba(255, 255, 255, 0.05);
+  --el-table-text-color: var(--text-primary);
+  --el-table-header-text-color: var(--text-secondary);
 }
 
 body {
@@ -298,7 +333,21 @@ body {
   font-family: 'Inter', 'Microsoft YaHei', 'PingFang SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background-color: var(--bg-dark);
   color: var(--text-primary);
-  overflow: hidden; /* App container handles scroll */
+  overflow: hidden; 
+}
+
+/* Noise Texture Overlay */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='1'/%3E%3C/svg%3E");
 }
 
 /* App Container */
@@ -315,11 +364,14 @@ body {
   width: var(--sidebar-width);
   background-color: var(--bg-sidebar);
   border-right: 1px solid var(--border-color);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
   padding: 24px;
   box-sizing: border-box;
+  z-index: 10;
 }
 
 .sidebar-header {
@@ -330,14 +382,15 @@ body {
 }
 
 .logo-container {
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(135deg, #646cff 0%, #a259ff 100%);
-  border-radius: 10px;
+  width: 44px;
+  height: 44px;
+  background: var(--accent-gradient);
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(100, 108, 255, 0.3);
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .app-logo {
@@ -417,7 +470,7 @@ body {
   height: 6px;
   border-radius: 50%;
   background: var(--accent-primary);
-  box-shadow: 0 0 8px var(--accent-primary);
+  box-shadow: 0 0 12px var(--accent-primary), 0 0 24px var(--accent-primary);
 }
 
 .sidebar-footer {
@@ -452,7 +505,35 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: rgba(0, 0, 0, 0.2);
+  position: relative;
+  background: transparent; /* Let body gradient show through */
+}
+
+/* Background Gradients */
+.main-content::before {
+  content: '';
+  position: absolute;
+  top: -200px;
+  right: -100px;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
+  filter: blur(60px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.main-content::after {
+  content: '';
+  position: absolute;
+  bottom: -200px;
+  left: -100px;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, rgba(0, 0, 0, 0) 70%);
+  filter: blur(60px);
+  pointer-events: none;
+  z-index: 0;
 }
 
 .top-bar {
@@ -495,10 +576,18 @@ body {
 /* Glass Card & Forms */
 .glass-card {
   background: var(--bg-card);
-  backdrop-filter: blur(16px);
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: var(--glass-border);
+  border-radius: 20px;
   padding: 32px;
+  box-shadow: var(--card-shadow);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.glass-card:hover {
+  box-shadow: var(--shadow-glow), var(--card-shadow);
+  border-color: rgba(139, 92, 246, 0.2);
 }
 
 .card-header {
@@ -524,18 +613,42 @@ body {
   font-weight: 500;
 }
 
-:deep(.el-input__wrapper), :deep(.el-select__wrapper) {
-  background-color: rgba(0, 0, 0, 0.2) !important;
-  box-shadow: 0 0 0 1px rgba(255,255,255,0.1) inset !important;
+/* Global Input Overrides - High Specificity */
+:deep(.el-input__wrapper), 
+:deep(.el-select__wrapper), 
+:deep(.el-textarea__inner) {
+  background-color: var(--el-input-bg-color) !important;
+  box-shadow: 0 0 0 1px var(--el-input-border-color) inset !important;
   color: white !important;
 }
 
-:deep(.el-input__wrapper.is-focus) {
+:deep(.el-input__wrapper.is-focus), 
+:deep(.el-select__wrapper.is-focused),
+:deep(.el-textarea__inner:focus) {
   box-shadow: 0 0 0 1px var(--accent-primary) inset !important;
+  background-color: rgba(0, 0, 0, 0.4) !important;
+}
+
+:deep(.el-input.is-disabled .el-input__wrapper) {
+   background-color: rgba(255, 255, 255, 0.05) !important;
+   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05) inset !important;
 }
 
 :deep(.el-input__inner) {
-  color: var(--text-primary) !important;
+  color: #F8FAFC !important;
+  caret-color: var(--accent-primary);
+  background: transparent !important;
+  height: 100%;
+}
+
+:deep(.el-textarea__inner) {
+  background-color: rgba(0, 0, 0, 0.3) !important;
+  color: #F8FAFC !important;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.1) inset !important;
+}
+
+:deep(.el-textarea__inner:focus) {
+  box-shadow: 0 0 0 1px var(--accent-primary) inset !important;
 }
 
 .form-hint {
@@ -582,9 +695,17 @@ body {
 }
 
 .save-btn {
-  background: linear-gradient(135deg, #646cff 0%, #8f44fd 100%) !important;
+  background: var(--accent-gradient) !important;
   border: none !important;
   flex: 1;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.save-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 16px rgba(139, 92, 246, 0.4);
 }
 
 .secondary-btn {

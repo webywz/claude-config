@@ -1,5 +1,12 @@
 // Global styles for the app
-@use './variables.scss' as *;
+// @use './variables.scss' as *; // Disabling old vars to prevent conflict
+
+/* Deep Space Theme Variables (SCSS Fallback) */
+:root {
+    --bg-dark: #0B0B10;
+    --accent-primary: #8B5CF6;
+    --accent-gradient: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
+}
 
 #app {
   width: 100%;
@@ -10,40 +17,42 @@
 
 // Element Plus AI-themed overrides
 .el-input__wrapper {
-  background-color: var(--bg-input) !important;
-  border: 1px solid var(--border-color) !important;
+  background-color: rgba(0, 0, 0, 0.3) !important; /* Force Dark Transparent */
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
   border-radius: 12px !important;
-  box-shadow: var(--shadow-sm) !important;
+  box-shadow: none !important;
   transition: all 0.3s ease !important;
 
   &:hover {
-    border-color: var(--color-primary-light) !important;
-    box-shadow: var(--shadow-md) !important;
+    border-color: var(--accent-primary) !important;
+    box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.3) !important;
   }
 
   &.is-focus {
-    border-color: var(--color-primary) !important;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1) !important;
+    border-color: var(--accent-primary) !important;
+    box-shadow: 0 0 0 1px var(--accent-primary) !important;
+    background-color: rgba(0, 0, 0, 0.5) !important;
   }
 }
 
 .el-input__inner {
-  color: var(--text-primary) !important;
+  color: #F8FAFC !important; /* Bright White Text */
   border-radius: 12px !important;
+  background: transparent !important;
+  caret-color: var(--accent-primary) !important;
 
   &::placeholder {
-    color: var(--text-light) !important;
+    color: rgba(255, 255, 255, 0.4) !important;
   }
 }
 
 .el-select {
   .el-input__wrapper {
-    background-color: var(--bg-input) !important;
+    background-color: rgba(0, 0, 0, 0.3) !important;
   }
 
   .el-select__caret {
-    color: var(--text-dim) !important;
-    transition: transform 0.3s ease;
+    color: rgba(255, 255, 255, 0.6) !important;
   }
 }
 

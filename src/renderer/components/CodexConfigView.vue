@@ -792,4 +792,12 @@ async function handleSavePreset() {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
 }
+
+/* Force dark inputs in this view */
+:deep(.el-input__wrapper) {
+    background-color: rgba(0,0,0,0.3) !important;
+}
+:deep(.el-input__inner) {
+    color: #F8FAFC !important;
+}
 </style>
