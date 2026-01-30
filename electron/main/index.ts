@@ -7,9 +7,10 @@ import { join as pathJoin, dirname } from 'path'
 import { homedir } from 'os'
 import { execSync } from 'child_process'
 import { CodexConfigManager } from '../config/codex-config-manager'
+import { SkillsManager } from '../config/skills-manager'
 import { InstallerService } from '../services/installer.service'
 import { autoUpdater } from 'electron-updater'
-import type { CodexConfig, CodexAuth } from '../config/types'
+import type { CodexConfig, CodexAuth, SkillScanResult, SkillProvider, SkillCreateInput } from '../config/types'
 
 // Types
 interface ClaudeConfig {
@@ -204,6 +205,9 @@ ipcMain.handle('presets:delete', (_, name: string): boolean => {
 // Codex Config Manager
 const codexConfigManager = new CodexConfigManager()
 
+// Skills Manager
+const skillsManager = new SkillsManager()
+
 // Codex IPC Handlers
 ipcMain.handle('codex:load-config', (): CodexConfig => {
   return codexConfigManager.loadConfig()
@@ -301,6 +305,13 @@ ipcMain.handle('system:open-folder', (): void => {
 
 ipcMain.handle('system:open-codex-folder', (): void => {
   shell.openPath(codexConfigManager.getConfigPath())
+})
+
+ipcMain.handle('system:open-path', async (_, path: string): Promise<string> => {
+  if (existsSync(path)) {
+    return await shell.openPath(path)
+  }
+  return 'Path does not exist'
 })
 
 ipcMain.handle('system:get-config-path', (): string => {
@@ -626,6 +637,31 @@ ipcMain.handle('installer:verify', async (_, toolId: string) => {
 ipcMain.handle('installer:cancel', async (_, toolId: string) => {
   if (!installerService) return
   await installerService.cancelInstallation(toolId)
+})
+
+// Skills IPC Handlers
+ipcMain.handle('skills:scan', (): SkillScanResult => {
+  return skillsManager.scanSkills()
+})
+
+ipcMain.handle('skills:sync', (_, targets: SkillProvider[] | 'all'): { success: boolean, message: string } => {
+  return skillsManager.syncSkills(targets)
+})
+
+ipcMain.handle('skills:get-paths', (): Record<SkillProvider, string> => {
+  return skillsManager.getSkillPaths()
+})
+
+ipcMain.handle('skills:create', (_, input: SkillCreateInput): { success: boolean, message: string } => {
+  return skillsManager.createSkill(input)
+})
+
+ipcMain.handle('skills:delete', (_, skillName: string): { success: boolean, message: string } => {
+  return skillsManager.deleteSkill(skillName)
+})
+
+ipcMain.handle('skills:import', async (_, filePath: string, targetProviders: SkillProvider[]): Promise<{ success: boolean, message: string }> => {
+  return await skillsManager.importSkill(filePath, targetProviders)
 })
 
 // Window Management

@@ -39,6 +39,16 @@
         Codex 配置
       </button>
       <button
+        :class="['tab-btn', { active: activeTab === 'skills' }]"
+        @click="activeTab = 'skills'"
+      >
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 12C4 7.58172 7.58172 4 12 4C16.4183 4 20 7.58172 20 12M4 12C4 16.4183 7.58172 20 12 20C16.4183 20 20 16.4183 20 12M4 12H2M20 12H22M12 4V2M12 20V22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <path d="M12 8L12 16M8 12L16 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        Skills 管理
+      </button>
+      <button
         :class="['tab-btn', { active: activeTab === 'installer' }]"
         @click="activeTab = 'installer'"
       >
@@ -147,34 +157,12 @@
             <el-select v-model="modelValue" placeholder="选择或输入模型..." filterable allow-create default-first-option>
               <el-option-group label="Claude 4.5 系列">
                 <el-option label="Claude Opus 4.5 (最强)" value="claude-opus-4-5-20251101" />
-                <el-option label="Claude Opus 4.5 Thinking (深度推理)" value="claude-opus-4-5-20251101-thinking" />
                 <el-option label="Claude Sonnet 4.5 (平衡)" value="claude-sonnet-4-5-20250929" />
-                <el-option label="Claude Sonnet 4.5 Thinking" value="claude-sonnet-4-5-20250929-thinking" />
                 <el-option label="Claude Haiku 4.5 (快速)" value="claude-haiku-4-5-20251001" />
               </el-option-group>
               <el-option-group label="Claude 4 系列">
                 <el-option label="Claude Opus 4" value="claude-opus-4-20250514" />
                 <el-option label="Claude Sonnet 4" value="claude-sonnet-4-20250514" />
-              </el-option-group>
-              <el-option-group label="Claude 3.5 系列">
-                <el-option label="Claude 3.5 Sonnet" value="claude-3-5-sonnet-20240620" />
-                <el-option label="Claude 3.5 Haiku" value="claude-3-5-haiku-20241022" />
-              </el-option-group>
-              <el-option-group label="Claude 3 系列">
-                <el-option label="Claude 3 Opus" value="claude-3-opus-20240229" />
-                <el-option label="Claude 3 Sonnet" value="claude-3-sonnet-20240229" />
-                <el-option label="Claude 3 Haiku" value="claude-3-haiku-20240307" />
-              </el-option-group>
-              <el-option-group label="GLM 系列 (智谱AI)">
-                <el-option label="GLM-4 Plus" value="glm-4-plus" />
-                <el-option label="GLM-4.7" value="glm-4.7" />
-                <el-option label="GLM-4.6" value="glm-4.6" />
-                <el-option label="GLM-4.5" value="glm-4.5" />
-                <el-option label="GLM-4 AirX" value="glm-4-airx" />
-                <el-option label="GLM-4 Long" value="glm-4-long" />
-                <el-option label="GLM-4 FlashX" value="glm-4-flashx" />
-                <el-option label="GLM-4 Flash (免费)" value="glm-4-flash-250414" />
-                <el-option label="GLM-4 Air" value="glm-4-air-250414" />
               </el-option-group>
             </el-select>
           </el-form-item>
@@ -317,6 +305,11 @@
           <CodexConfigView />
         </div>
 
+        <!-- Skills Management Tab -->
+        <div v-else-if="activeTab === 'skills'" key="skills" class="tab-content">
+          <SkillsView />
+        </div>
+
         <!-- One-Click Installer Tab -->
         <div v-else-if="activeTab === 'installer'" key="installer" class="tab-content installer-tab">
           <OneClickInstaller />
@@ -339,12 +332,13 @@ import { useCodexStore } from '@/stores/codex.store'
 import CodexConfigView from '@/components/CodexConfigView.vue'
 import OneClickInstaller from '@/components/OneClickInstaller.vue'
 import EnvVarView from '@/components/EnvVarView.vue'
+import SkillsView from '@/components/SkillsView.vue'
 import logoUrl from '@/assets/logo.svg?url'
 
 const configStore = useConfigStore()
 const codexStore = useCodexStore()
 
-const activeTab = ref<'claude' | 'codex' | 'installer' | 'envvar'>('claude')
+const activeTab = ref<'claude' | 'codex' | 'skills' | 'installer' | 'envvar'>('claude')
 
 const configPath = computed(() => configStore.configPath)
 const statusMessage = computed(() => configStore.statusMessage)

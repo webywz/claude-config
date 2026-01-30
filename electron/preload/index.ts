@@ -28,6 +28,7 @@ const api: ElectronAPI = {
   system: {
     openFolder: () => ipcRenderer.invoke('system:open-folder'),
     openCodexFolder: () => ipcRenderer.invoke('system:open-codex-folder'),
+    openPath: (path) => ipcRenderer.invoke('system:open-path', path),
     getConfigPath: () => ipcRenderer.invoke('system:get-config-path'),
     getEnvVars: () => ipcRenderer.invoke('system:get-env-vars'),
     setEnvVar: (name, value) => ipcRenderer.invoke('system:set-env-var', name, value),
@@ -45,6 +46,14 @@ const api: ElectronAPI = {
     configureToolEnv: (toolId, toolPath) => ipcRenderer.invoke('installer:configure-env', toolId, toolPath),
     verifyInstallation: (toolId) => ipcRenderer.invoke('installer:verify', toolId),
     cancelInstallation: (toolId) => ipcRenderer.invoke('installer:cancel', toolId)
+  },
+  skills: {
+    scan: () => ipcRenderer.invoke('skills:scan'),
+    sync: (targets) => ipcRenderer.invoke('skills:sync', targets),
+    getPaths: () => ipcRenderer.invoke('skills:get-paths'),
+    create: (input) => ipcRenderer.invoke('skills:create', input),
+    delete: (skillName) => ipcRenderer.invoke('skills:delete', skillName),
+    import: (filePath, targetProviders) => ipcRenderer.invoke('skills:import', filePath, targetProviders)
   }
 }
 

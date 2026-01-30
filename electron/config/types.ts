@@ -98,6 +98,7 @@ export interface ElectronAPI {
   system: {
     openFolder: () => Promise<void>
     openCodexFolder: () => Promise<void>
+    openPath: (path: string) => Promise<string>
     getConfigPath: () => Promise<string>
     getEnvVars: () => Promise<Array<{ name: string; value: string; type: 'user' | 'system' }>>
     setEnvVar: (name: string, value: string) => Promise<boolean>
@@ -116,4 +117,33 @@ export interface ElectronAPI {
     verifyInstallation: (toolId: string) => Promise<boolean>
     cancelInstallation: (toolId: string) => Promise<void>
   }
+  skills: {
+    scan: () => Promise<SkillScanResult>
+    sync: (targets: SkillProvider[] | 'all') => Promise<{ success: boolean; message: string }>
+    getPaths: () => Promise<Record<SkillProvider, string>>
+    create: (input: SkillCreateInput) => Promise<{ success: boolean; message: string }>
+    delete: (skillName: string) => Promise<{ success: boolean; message: string }>
+    import: (filePath: string, targetProviders: SkillProvider[]) => Promise<{ success: boolean; message: string }>
+  }
+}
+
+// Skills Types
+export type SkillProvider = 'claude' | 'codex' | 'gemini' | 'antigravity' | 'trae'
+
+export interface Skill {
+  name: string
+  path: string
+  description: string
+  provider: SkillProvider
+}
+
+export interface SkillCreateInput {
+  name: string
+  description?: string
+  providers: SkillProvider[]
+}
+
+export interface SkillScanResult {
+  providers: Record<SkillProvider, Skill[]>
+  allSkills: string[]
 }
