@@ -44,20 +44,38 @@ const presetsPath = pathJoin(homedir(), '.claude_presets', 'presets.json')
 const codexPresetsPath = pathJoin(homedir(), '.codex_presets', 'presets.json')
 
 function loadConfig(): ClaudeConfig {
-  if (existsSync(configPath)) {
-    try {
-      const content = readFileSync(configPath, 'utf-8')
-      return JSON.parse(content)
-    } catch (error) {
-      console.error('Failed to load config:', error)
-    }
-  }
-  return {
+  // 默认配置结构
+  const defaultConfig: ClaudeConfig = {
     env: {},
     model: '',
     includeCoAuthoredBy: false,
     permissions: { allow: [], deny: [] }
   }
+
+  if (existsSync(configPath)) {
+    try {
+      const content = readFileSync(configPath, 'utf-8')
+      const fileConfig = JSON.parse(content)
+      
+      // 只提取我们需要的字段，缺失字段使用默认值
+      return {
+        env: {
+          ANTHROPIC_AUTH_TOKEN: fileConfig.env?.ANTHROPIC_AUTH_TOKEN,
+          ANTHROPIC_API_KEY: fileConfig.env?.ANTHROPIC_API_KEY,
+          ANTHROPIC_BASE_URL: fileConfig.env?.ANTHROPIC_BASE_URL,
+          DISABLE_TELEMETRY: fileConfig.env?.DISABLE_TELEMETRY,
+          CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: fileConfig.env?.CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC,
+          OTEL_METRICS_EXPORTER: fileConfig.env?.OTEL_METRICS_EXPORTER
+        },
+        model: fileConfig.model ?? defaultConfig.model,
+        includeCoAuthoredBy: fileConfig.includeCoAuthoredBy ?? defaultConfig.includeCoAuthoredBy,
+        permissions: fileConfig.permissions ?? defaultConfig.permissions
+      }
+    } catch (error) {
+      console.error('Failed to load config:', error)
+    }
+  }
+  return defaultConfig
 }
 
 function saveConfig(config: ClaudeConfig): boolean {
@@ -75,21 +93,46 @@ function saveConfig(config: ClaudeConfig): boolean {
       console.log('[Main] Directory exists')
     }
 
-    // Test write permissions by checking if we can write to the directory
-    try {
-      const testPath = pathJoin(dir, '.write-test')
-      writeFileSync(testPath, 'test')
-      // Remove test file if it exists
-      if (existsSync(testPath)) {
-        const fs = require('fs')
-        fs.unlinkSync(testPath)
+    // 读取现有配置文件（如果存在）
+    let existingConfig: any = {}
+    if (existsSync(configPath)) {
+      try {
+        const content = readFileSync(configPath, 'utf-8')
+        existingConfig = JSON.parse(content)
+        console.log('[Main] Existing config loaded for merge')
+      } catch (e) {
+        console.log('[Main] No existing config or parse error, will create new')
       }
-      console.log('[Main] Write permissions OK')
-    } catch (permError) {
-      console.error('[Main] Write permission error:', permError)
     }
 
-    writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf-8')
+    // 合并配置：只覆盖我们管理的字段，保留其他字段
+    const mergedConfig = {
+      ...existingConfig,
+      model: config.model,
+      includeCoAuthoredBy: config.includeCoAuthoredBy,
+      permissions: config.permissions,
+      env: {
+        ...existingConfig.env,
+        // 只覆盖我们管理的 env 字段
+        ANTHROPIC_AUTH_TOKEN: config.env.ANTHROPIC_AUTH_TOKEN,
+        ANTHROPIC_API_KEY: config.env.ANTHROPIC_API_KEY,
+        ANTHROPIC_BASE_URL: config.env.ANTHROPIC_BASE_URL,
+        DISABLE_TELEMETRY: config.env.DISABLE_TELEMETRY,
+        CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: config.env.CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC,
+        OTEL_METRICS_EXPORTER: config.env.OTEL_METRICS_EXPORTER
+      }
+    }
+
+    // 清理 undefined 值
+    Object.keys(mergedConfig.env).forEach(key => {
+      if (mergedConfig.env[key] === undefined) {
+        delete mergedConfig.env[key]
+      }
+    })
+
+    console.log('[Main] Merged config:', JSON.stringify(mergedConfig, null, 2))
+
+    writeFileSync(configPath, JSON.stringify(mergedConfig, null, 2), 'utf-8')
 
     // Verify the file was written
     if (existsSync(configPath)) {
