@@ -563,7 +563,8 @@ body::before {
 }
 
 .view-container {
-  max-width: 900px;
+  max-width: 1200px; /* Increased from 900px for better table visibility */
+  width: 100%;
   margin: 0 auto;
   animation: slideUp 0.4s ease-out;
 }

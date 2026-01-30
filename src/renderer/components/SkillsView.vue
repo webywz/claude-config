@@ -63,7 +63,7 @@
     <!-- Skills Matrix Table -->
     <div class="skills-matrix glass-panel" data-animate="3" v-loading="loading">
       <el-table :data="tableData" style="width: 100%" height="calc(100vh - 400px)" :header-cell-style="{ background: 'transparent' }" :row-style="{ background: 'transparent' }">
-        <el-table-column prop="name" label="技能名称" min-width="180" sortable>
+        <el-table-column prop="name" label="技能名称" min-width="200" sortable>
           <template #default="{ row }">
             <div class="skill-name-cell">
               <div class="skill-icon-wrapper">
@@ -79,7 +79,7 @@
           </template>
         </el-table-column>
         
-        <el-table-column v-for="provider in providerList" :key="provider" :label="capitalize(provider)" align="center" width="100">
+        <el-table-column v-for="provider in providerList" :key="provider" :label="capitalize(provider)" align="center" width="120">
           <template #default="{ row }">
             <div class="status-cell">
               <div v-if="row.providers[provider]" class="status-dot success"></div>

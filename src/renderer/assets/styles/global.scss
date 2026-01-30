@@ -3,9 +3,9 @@
 
 /* Deep Space Theme Variables (SCSS Fallback) */
 :root {
-    --bg-dark: #0B0B10;
-    --accent-primary: #8B5CF6;
-    --accent-gradient: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
+  --bg-dark: #0B0B10;
+  --accent-primary: #8B5CF6;
+  --accent-gradient: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
 }
 
 #app {
@@ -17,7 +17,8 @@
 
 // Element Plus AI-themed overrides
 .el-input__wrapper {
-  background-color: rgba(0, 0, 0, 0.3) !important; /* Force Dark Transparent */
+  background-color: rgba(0, 0, 0, 0.3) !important;
+  /* Force Dark Transparent */
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   border-radius: 12px !important;
   box-shadow: none !important;
@@ -36,7 +37,8 @@
 }
 
 .el-input__inner {
-  color: #F8FAFC !important; /* Bright White Text */
+  color: #F8FAFC !important;
+  /* Bright White Text */
   border-radius: 12px !important;
   background: transparent !important;
   caret-color: var(--accent-primary) !important;
@@ -200,22 +202,58 @@
   }
 }
 
-// Scrollbar styling
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+// Table Overrides - Force Dark/Transparent
+.el-table {
+  --el-table-bg-color: transparent !important;
+  --el-table-tr-bg-color: transparent !important;
+  --el-table-header-bg-color: transparent !important;
+  --el-table-row-hover-bg-color: rgba(255, 255, 255, 0.05) !important;
+
+  background-color: transparent !important;
+  color: #F8FAFC !important;
+
+  th.el-table__cell,
+  td.el-table__cell {
+    background-color: transparent !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+  }
+
+  // Double down on hover to be absolutely sure
+  tbody tr:hover>td.el-table__cell {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+  }
 }
 
+// Fix other components that used old variables
+.el-checkbox {
+  color: #F8FAFC !important;
+
+  .el-checkbox__inner {
+    background-color: rgba(0, 0, 0, 0.3) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+  }
+
+  &.is-checked .el-checkbox__inner {
+    background-color: var(--accent-primary) !important;
+    border-color: var(--accent-primary) !important;
+  }
+}
+
+.el-button--primary {
+  background: var(--accent-gradient) !important;
+  border: none !important;
+}
+
+// Scrollbars
 ::-webkit-scrollbar-track {
-  background: var(--bg-primary);
-  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.3);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 10px;
 
   &:hover {
-    background: var(--gradient-secondary);
+    background: rgba(255, 255, 255, 0.2);
   }
 }
