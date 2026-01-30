@@ -156,6 +156,8 @@
                 />
               </el-form-item>
 
+              <!-- API Key input removed as per new design -->
+
             </div>
           </div>
         </div>
@@ -165,6 +167,14 @@
       <div class="form-group" data-animate="3">
         <div class="section-header">
           <h3>API 密钥配置 (auth.json)</h3>
+          <el-button type="primary" size="small" @click="showAddAuthKeyDialog = true">
+            <template #icon>
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </template>
+            添加 API Key
+          </el-button>
         </div>
         <div class="auth-keys-editor">
           <div
@@ -185,8 +195,8 @@
               text
               @click="handleRemoveAuthKey(keyName)"
             >
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M3 6H5H21M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" stroke-width="2"/>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 6H21M19 6V20C19 21.1046 18.1046 22 17 22H7C5.89543 22 5 21.1046 5 20V6M8 6V4C8 3.44772 8.44772 3 9 3H15C15.5523 3 16 3.44772 16 4V6M10 11V17M14 11V17" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </el-button>
           </div>
@@ -279,6 +289,30 @@
         <el-button type="primary" @click="handleAddProvider">添加</el-button>
       </template>
     </el-dialog>
+
+    <!-- Add Auth Key Dialog -->
+    <el-dialog v-model="showAddAuthKeyDialog" title="添加 API Key" width="400px" class="glass-dialog">
+      <el-form label-position="top">
+        <el-form-item label="Key 名称 (例如 OPENAI_API_KEY)">
+          <el-input
+            v-model="newAuthKeyName"
+            placeholder="例如: OPENAI_API_KEY"
+          />
+        </el-form-item>
+        <el-form-item label="Key 值">
+          <el-input
+            v-model="newAuthKeyValue"
+            type="password"
+            show-password
+            placeholder="sk-..."
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showAddAuthKeyDialog = false">取消</el-button>
+        <el-button type="primary" @click="handleAddAuthKey">添加</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -304,8 +338,10 @@ const savingConfig = ref(false)
 const savingAuth = ref(false)
 const smartSuggestion = ref('')
 const showAddProviderDialog = ref(false)
+const showAddAuthKeyDialog = ref(false)
 const newProviderName = ref('')
 const newAuthKeyName = ref('')
+const newAuthKeyValue = ref('')
 const selectedPreset = ref('')
 const newPresetName = ref('')
 
@@ -314,6 +350,7 @@ onMounted(async () => {
   
   // Ensure paths and raw config are loaded
   await codexStore.loadPaths()
+  await codexStore.loadAuth()
   await codexStore.loadConfigRaw()
 
   setTimeout(() => {
@@ -395,6 +432,27 @@ async function handleRemoveProvider(name: string) {
   } catch {
     // User cancelled
   }
+}
+
+async function handleAddAuthKey() {
+  const name = newAuthKeyName.value.trim().toUpperCase()
+  const value = newAuthKeyValue.value.trim()
+  
+  if (!name) {
+    ElMessage.error('请输入 Key 名称')
+    return
+  }
+  
+  if (!value) {
+    ElMessage.error('请输入 Key 值')
+    return
+  }
+
+  codexStore.updateAuthKey(name, value)
+  ElMessage.success(`已添加 "${name}"`)
+  showAddAuthKeyDialog.value = false
+  newAuthKeyName.value = ''
+  newAuthKeyValue.value = ''
 }
 
 function handleRemoveAuthKey(name: string) {
