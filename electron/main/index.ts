@@ -673,9 +673,9 @@ ipcMain.handle('skills:import', async (_, filePath: string, targetProviders: Ski
 // Window Management
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
-    width: 800,
+    width: 1280,
     height: 900,
-    minWidth: 600,
+    minWidth: 900,
     minHeight: 700,
     show: false,
     autoHideMenuBar: true,
