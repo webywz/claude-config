@@ -16,6 +16,6 @@ const sourcePngData = readFileSync(sourceIconPath)
 // 策略调整：不再手动生成损坏的 ICO。
 // 直接提供 512x512 或 1024x1024 的高质量 PNG 给 electron-builder。
 // 它会自动调用内置工具生成完美兼容的 Windows 图标。
-writeFileSync(join(outDir, 'icon.png'), sourcePngData)
+writeFileSync(join(outDir, 'icon-final.png'), sourcePngData)
 
-console.log(`[icons-v4] Premium icon source synced to build/icon.png for electron-builder auto-generation.`)
+console.log(`[icons-v4] Premium icon source synced to build/icon-final.png for electron-builder auto-generation.`)
