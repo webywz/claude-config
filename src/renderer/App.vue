@@ -384,56 +384,19 @@ body::before {
 .logo-container {
   width: 52px;
   height: 52px;
-  background: radial-gradient(circle at center, rgba(139, 92, 246, 0.2) 0%, rgba(15, 16, 20, 0.8) 100%);
-  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 
-    0 4px 15px rgba(0, 0, 0, 0.4),
-    inset 0 0 10px rgba(139, 92, 246, 0.1);
-}
-
-.logo-container::before {
-  content: '';
-  position: absolute;
-  inset: -2px;
-  background: conic-gradient(from 0deg, transparent, var(--accent-primary), transparent 50%);
-  animation: rotate-border 4s linear infinite;
-  opacity: 0.3;
-  z-index: -1;
-}
-
-.logo-container:hover {
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3);
-  border-color: rgba(139, 92, 246, 0.4);
+  background-color: #ffffff;
+  border-radius: 12px;
 }
 
 .app-logo {
-  width: 38px;
-  height: 38px;
-  filter: drop-shadow(0 0 12px rgba(139, 92, 246, 0.6));
-  animation: logo-pulse 4s ease-in-out infinite alternate;
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
   user-select: none;
   pointer-events: none;
-  object-fit: contain;
-}
-
-/* 动画定义 */
-@keyframes logo-pulse {
-  from { 
-    filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.4)) brightness(1); 
-    transform: scale(1);
-  }
-  to { 
-    filter: drop-shadow(0 0 20px rgba(139, 92, 246, 0.8)) brightness(1.2);
-    transform: scale(1.02);
-  }
 }
 
 @keyframes rotate-border {
