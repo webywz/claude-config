@@ -1,7 +1,6 @@
-import { app, BrowserWindow, dialog } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, shell, nativeImage } from 'electron'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { join } from 'path'
-import { ipcMain, shell } from 'electron'
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs'
 import { join as pathJoin, dirname } from 'path'
 import { homedir } from 'os'
@@ -56,7 +55,7 @@ function loadConfig(): ClaudeConfig {
     try {
       const content = readFileSync(configPath, 'utf-8')
       const fileConfig = JSON.parse(content)
-      
+
       // 只提取我们需要的字段，缺失字段使用默认值
       return {
         env: {
@@ -719,6 +718,15 @@ ipcMain.handle('skills:import', async (_, filePath: string, targetProviders: Ski
 
 // Window Management
 function createWindow(): void {
+  // 设置 AppUserModelId 以确保 Windows 任务栏图标正确同步
+  if (process.platform === 'win32') {
+    app.setAppUserModelId('com.ai.control.center')
+  }
+
+  const iconPath = is.dev
+    ? join(__dirname, '../../resources/icon.png')
+    : join(process.resourcesPath, 'icon.png')
+
   const mainWindow = new BrowserWindow({
     width: 1280,
     height: 900,
@@ -727,6 +735,7 @@ function createWindow(): void {
     show: false,
     autoHideMenuBar: true,
     backgroundColor: '#0d1117',
+    icon: nativeImage.createFromPath(iconPath),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       nodeIntegration: false,

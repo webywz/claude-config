@@ -178,7 +178,7 @@ import CodexConfigView from '@/components/CodexConfigView.vue'
 import OneClickInstaller from '@/components/OneClickInstaller.vue'
 import EnvVarView from '@/components/EnvVarView.vue'
 import SkillsView from '@/components/SkillsView.vue'
-import logoUrl from '@/assets/logo.svg?url'
+import logoUrl from '@/assets/logo.png'
 
 const configStore = useConfigStore()
 const codexStore = useCodexStore()
@@ -415,23 +415,25 @@ body::before {
 }
 
 .app-logo {
-  width: 36px;
-  height: 36px;
-  filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.8));
-  animation: logo-glow 3s ease-in-out infinite alternate, logo-spin 20s linear infinite;
+  width: 38px;
+  height: 38px;
+  filter: drop-shadow(0 0 12px rgba(139, 92, 246, 0.6));
+  animation: logo-pulse 4s ease-in-out infinite alternate;
   user-select: none;
   pointer-events: none;
+  object-fit: contain;
 }
 
 /* 动画定义 */
-@keyframes logo-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-@keyframes logo-glow {
-  from { filter: drop-shadow(0 0 5px rgba(139, 92, 246, 0.6)) contrast(1.1); }
-  to { filter: drop-shadow(0 0 15px rgba(139, 92, 246, 1)) contrast(1.3); }
+@keyframes logo-pulse {
+  from { 
+    filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.4)) brightness(1); 
+    transform: scale(1);
+  }
+  to { 
+    filter: drop-shadow(0 0 20px rgba(139, 92, 246, 0.8)) brightness(1.2);
+    transform: scale(1.02);
+  }
 }
 
 @keyframes rotate-border {

@@ -1,19 +1,26 @@
 {
-  "appId": "com.claude.config",
-  "productName": "Claude Config",
+  "appId": "com.ai.control.center",
+  "productName": "AI 智控中心",
   "directories": {
     "buildResources": "build",
     "output": "release"
   },
+  "extraResources": [
+    {
+      "from": "resources",
+      "to": ".",
+      "filter": [ "**/*" ]
+    }
+  ],
   "files": [
     "out/**/*"
   ],
   "win": {
-    "icon": "build/icon.ico",
+    "icon": "build/icon.png",
     "target": [
       {
         "target": "nsis",
-        "arch": ["x64"]
+        "arch": [ "x64" ]
       }
     ]
   },
@@ -21,16 +28,13 @@
     "target": [
       {
         "target": "dmg",
-        "arch": ["x64", "arm64"]
+        "arch": [ "x64", "arm64" ]
       }
     ],
     "category": "public.app-category.developer-tools"
   },
   "nsis": {
     "oneClick": false,
-    "allowToChangeInstallationDirectory": true,
-    "installerIcon": "build/icon.ico",
-    "uninstallerIcon": "build/icon.ico",
-    "installerHeaderIcon": "build/icon.ico"
+    "allowToChangeInstallationDirectory": true
   }
 }
