@@ -9,9 +9,9 @@
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
-    "build:win": "node scripts/generate-icons.mjs && npm run build && electron-builder --win",
+    "build:win": "node scripts/generate-icons.mjs && npm run build && electron-builder --win -c build/icon-config.json",
     "build:mac": "npm run build && electron-builder --mac",
-    "build:all": "node scripts/generate-icons.mjs && npm run build && electron-builder --win --mac"
+    "build:all": "node scripts/generate-icons.mjs && npm run build && electron-builder --win --mac -c build/icon-config.json"
   },
   "dependencies": {
     "@types/adm-zip": "^0.5.7",
