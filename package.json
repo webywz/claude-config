@@ -1,9 +1,9 @@
 {
-  "name": "claude-config-electron",
+  "name": "ai-control-center",
   "version": "1.0.0",
-  "description": "Claude Code configuration tool",
+  "description": "AI Control Center",
   "main": "out/main/index.js",
-  "author": "",
+  "author": "Noah",
   "license": "MIT",
   "scripts": {
     "dev": "electron-vite dev",

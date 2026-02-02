@@ -10,8 +10,8 @@ const outDir = join(repoRoot, 'build')
 
 mkdirSync(outDir, { recursive: true })
 
-const BG_A = [0x66, 0x7e, 0xea]
-const BG_B = [0x76, 0x4b, 0xa2]
+const BG_A = [0x8B, 0x5C, 0xF6] // Violet - 与 App.vue 中的 --accent-primary 一致
+const BG_B = [0x3B, 0x82, 0xF6] // Blue
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value))

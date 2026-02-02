@@ -382,30 +382,78 @@ body::before {
 }
 
 .logo-container {
-  width: 44px;
-  height: 44px;
-  background: var(--accent-gradient);
-  border-radius: 12px;
+  width: 52px;
+  height: 52px;
+  background: radial-gradient(circle at center, rgba(139, 92, 246, 0.2) 0%, rgba(15, 16, 20, 0.8) 100%);
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 4px 15px rgba(0, 0, 0, 0.4),
+    inset 0 0 10px rgba(139, 92, 246, 0.1);
+}
+
+.logo-container::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: conic-gradient(from 0deg, transparent, var(--accent-primary), transparent 50%);
+  animation: rotate-border 4s linear infinite;
+  opacity: 0.3;
+  z-index: -1;
+}
+
+.logo-container:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3);
+  border-color: rgba(139, 92, 246, 0.4);
 }
 
 .app-logo {
-  width: 24px;
-  height: 24px;
+  width: 36px;
+  height: 36px;
+  filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.8));
+  animation: logo-glow 3s ease-in-out infinite alternate, logo-spin 20s linear infinite;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* 动画定义 */
+@keyframes logo-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes logo-glow {
+  from { filter: drop-shadow(0 0 5px rgba(139, 92, 246, 0.6)) contrast(1.1); }
+  to { filter: drop-shadow(0 0 15px rgba(139, 92, 246, 1)) contrast(1.3); }
+}
+
+@keyframes rotate-border {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.app-title {
+  display: flex;
+  flex-direction: column;
 }
 
 .app-title h1 {
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 20px;
+  font-weight: 800;
   margin: 0;
-  line-height: 1.2;
-  background: linear-gradient(90deg, #fff, #babbcc);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #FFF 0%, #A78BFA 50%, #6366F1 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
 }
 
 .version-tag {
